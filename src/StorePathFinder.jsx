@@ -13,8 +13,8 @@ const GridLayer = ({ grid, startPos, paths, itemsDatabase, onCellClick }) => {
         row.map((cell, y) => {
           const isStart = startPos.x === x && startPos.y === y;
           const isPath = paths.some((p) => p.x === x && p.y === y);
-          const isItem = Object.values(itemsDatabase).some(
-            (i) => i.coOrds.x === x && i.coOrds.y === y
+          const isItem = itemsDatabase.some(
+            ({ coOrds }) => coOrds.x === x && coOrds.y === y
           );
 
           let color = "#fff";
@@ -51,12 +51,12 @@ const StorePathfinderMap = () => {
       1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
     ],
     [
-      1, 1, 2, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      1, 1, 101, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
       1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
     ],
     [
       1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-      1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 1,
+      1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 124, 1, 1, 1,
     ],
     [
       1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -67,23 +67,23 @@ const StorePathfinderMap = () => {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1,
     ],
     [
-      1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 115, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1,
     ],
     [
       1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0,
-      0, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+      0, 119, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
     ],
     [
-      1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 2, 1, 1, 1, 0, 0, 0, 0, 0, 2, 1, 1, 0,
+      1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 112, 1, 1, 1, 0, 0, 0, 0, 0, 113, 1, 1, 0,
       0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
     ],
     [
-      1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0,
-      0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 1,
+      1, 1, 1, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0,
+      0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 123, 1, 1, 1,
     ],
     [
-      1, 1, 1, 1, 0, 0, 0, 1, 1, 2, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0,
+      1, 1, 1, 1, 0, 0, 0, 1, 1, 111, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0,
       0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
     ],
     [
@@ -91,7 +91,7 @@ const StorePathfinderMap = () => {
       0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1,
     ],
     [
-      1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0,
+      1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 110, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0,
       0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1,
     ],
     [
@@ -99,35 +99,35 @@ const StorePathfinderMap = () => {
       0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1,
     ],
     [
-      1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2, 1, 0, 0, 0, 0, 0, 1, 2, 0, 0,
-      0, 0, 0, 2, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 2, 1, 1, 1,
+      1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 109, 1, 0, 0, 0, 0, 0, 1, 114, 0, 0,
+      0, 0, 0, 118, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 122, 1, 1, 1,
     ],
     [
-      1, 1, 2, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0,
-      0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 2, 0, 0, 0, 1, 1, 1, 1,
+      1, 1, 103, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0,
+      0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 120, 0, 0, 0, 1, 1, 1, 1,
     ],
     [
-      1, 1, 1, 0, 0, 0, 0, 1, 2, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 2, 0, 0,
+      1, 1, 1, 0, 0, 0, 0, 1, 108, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 116, 0, 0,
       0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1,
     ],
     [
       1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
-      2, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1,
+      117, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1,
     ],
     [
-      1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+      1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 107, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1,
       1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1,
     ],
     [
       1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 2, 1, 1, 1,
+      0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 121, 1, 1, 1,
     ],
     [
-      1, 1, 2, 0, 0, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      1, 1, 104, 0, 0, 105, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
     ],
     [
-      1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 106, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1,
     ],
     [
@@ -135,33 +135,35 @@ const StorePathfinderMap = () => {
       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     ],
   ];
+
   const [grid] = useState(initialGrid);
-  const itemsDatabase = {
-    1: { productName: "Beer", coOrds: { x: 1, y: 2 } },
-    2: { productName: "Frozen Goods", coOrds: { x: 8, y: 3 } },
-    3: { productName: "Ice", coOrds: { x: 14, y: 2 } },
-    4: { productName: "Household", coOrds: { x: 19, y: 2 } },
-    5: { productName: "ATM", coOrds: { x: 19, y: 5 } },
-    6: { productName: "Lotto", coOrds: { x: 20, y: 11 } },
-    7: { productName: "Seasonal", coOrds: { x: 17, y: 12 } },
-    8: { productName: "Medical/Health", coOrds: { x: 15, y: 8 } },
-    9: { productName: "Candy", coOrds: { x: 13, y: 14 } },
-    10: { productName: "Jerky & Nuts", coOrds: { x: 11, y: 10 } },
-    11: { productName: "Chips", coOrds: { x: 9, y: 9 } },
-    12: { productName: "Breakfast", coOrds: { x: 7, y: 12 } },
-    13: { productName: "Dry Goods", coOrds: { x: 7, y: 21 } },
-    14: { productName: "Specials", coOrds: { x: 13, y: 22 } },
-    15: { productName: "Roller Grill", coOrds: { x: 5, y: 10 } },
-    16: { productName: "POS", coOrds: { x: 15, y: 22 } },
-    17: { productName: "Hot Food", coOrds: { x: 16, y: 25 } },
-    18: { productName: "Magazines", coOrds: { x: 13, y: 28 } },
-    19: { productName: "Automotive", coOrds: { x: 6, y: 26 } },
-    20: { productName: "Tobacco Products", coOrds: { x: 14, y: 36 } },
-    21: { productName: "Condiments", coOrds: { x: 18, y: 40 } },
-    22: { productName: "Coffee Bar", coOrds: { x: 13, y: 40 } },
-    23: { productName: "Frozen Beverages", coOrds: { x: 8, y: 40 } },
-    24: { productName: "Soft Drinks", coOrds: { x: 2, y: 40 } },
-  };
+  const itemsDatabase = [
+    { productId: 101, productName: "Beer", coOrds: { x: 1, y: 2 } },
+    { productId: 102, productName: "Frozen Goods", coOrds: { x: 8, y: 3 } },
+    { productId: 103, productName: "Ice", coOrds: { x: 14, y: 2 } },
+    { productId: 104, productName: "Household", coOrds: { x: 19, y: 2 } },
+    { productId: 105, productName: "ATM", coOrds: { x: 19, y: 5 } },
+    { productId: 106, productName: "Lotto", coOrds: { x: 20, y: 11 } },
+    { productId: 107, productName: "Seasonal", coOrds: { x: 17, y: 12 } },
+    { productId: 108, productName: "Medical/Health", coOrds: { x: 15, y: 8 } },
+    { productId: 109, productName: "Candy", coOrds: { x: 13, y: 14 } },
+    { productId: 110, productName: "Jerky & Nuts", coOrds: { x: 11, y: 10 } },
+    { productId: 111, productName: "Chips", coOrds: { x: 9, y: 9 } },
+    { productId: 112, productName: "Breakfast", coOrds: { x: 7, y: 12 } },
+    { productId: 113, productName: "Dry Goods", coOrds: { x: 7, y: 21 } },
+    { productId: 114, productName: "Specials", coOrds: { x: 13, y: 22 } },
+    { productId: 115, productName: "Roller Grill", coOrds: { x: 5, y: 10 } },
+    { productId: 116, productName: "POS", coOrds: { x: 15, y: 22 } },
+    { productId: 117, productName: "Hot Food", coOrds: { x: 16, y: 25 } },
+    { productId: 118, productName: "Magazines", coOrds: { x: 13, y: 28 } },
+    { productId: 119, productName: "Automotive", coOrds: { x: 6, y: 26 } },
+    { productId: 120, productName: "Tobacco Products", coOrds: { x: 14, y: 36 } },
+    { productId: 121, productName: "Condiments", coOrds: { x: 18, y: 40 } },
+    { productId: 122, productName: "Coffee Bar", coOrds: { x: 13, y: 40 } },
+    { productId: 123, productName: "Frozen Beverages", coOrds: { x: 8, y: 40 } },
+    { productId: 124, productName: "Soft Drinks", coOrds: { x: 2, y: 40 } },
+  ];
+
   const [startPos, setStartPos] = useState({ x: 21, y: 18 });
   const [paths, setPaths] = useState([]);
   const [selectedItem, setSelectedItem] = useState("");
@@ -173,17 +175,17 @@ const StorePathfinderMap = () => {
   });
 
   const findPath = useCallback(() => {
-    if (!selectedItem || !itemsDatabase[selectedItem]) return;
+    const selectedProduct = itemsDatabase.filter(item => item.productId === +selectedItem);
 
-    const { coOrds } = itemsDatabase[selectedItem];
+    if (!selectedItem || selectedProduct.length === 0) return;
 
-    const tempGrid = grid.map((row, x) =>
-      row.map((cell, y) =>
-        cell === 1 || (cell === 2 && !(x === coOrds.x && y === coOrds.y))
-          ? 1
-          : 0
-      )
-    );
+    const { productId, productName, coOrds } = selectedProduct[0];
+
+    console.log(productName);
+
+    initialGrid[coOrds.x][coOrds.y] = productId;
+
+    const tempGrid = grid.map((row) => row.map((cell) => cell === 1 ? 1 : 0));
 
     pathfinder.setGrid(tempGrid);
 
@@ -202,6 +204,7 @@ const StorePathfinderMap = () => {
   }, [selectedItem, startPos]);
 
   const handleCellClick = (x, y) => {
+    console.log(x, y);
     if (grid[x][y] !== 1 && grid[x][y] !== 2) {
       setStartPos({ x, y });
       setPaths([]);
@@ -209,16 +212,16 @@ const StorePathfinderMap = () => {
   };
 
   return (
-    <div style={{height: '100%', display: 'flex', flexDirection: 'column', gap: '1em'}}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '1em' }}>
       <select
         onChange={(e) => setSelectedItem(e.target.value)}
         value={selectedItem}
-        style={{minHeight: '30px', padding: '6px 12px'}}
+        style={{ minHeight: '30px', padding: '6px 12px' }}
       >
         <option value="">Select Item</option>
-        {Object.entries(itemsDatabase).map(([key, val]) => (
-          <option key={key} value={key}>
-            {val.productName}
+        {itemsDatabase.map(({ productId, productName }) => (
+          <option key={productId} value={productId}>
+            {productName}
           </option>
         ))}
       </select>
@@ -230,7 +233,7 @@ const StorePathfinderMap = () => {
           (grid[0].length * CELL_SIZE) / 2,
         ]}
         zoom={-1}
-        style={{ height: "80vh", width: "100%" }}
+        style={{ height: "80vh", width: "100%", borderRadius: '1em' }}
         maxBounds={[
           [0, 0],
           [grid.length * CELL_SIZE, grid[0].length * CELL_SIZE],
@@ -243,7 +246,6 @@ const StorePathfinderMap = () => {
           paths={paths}
           itemsDatabase={itemsDatabase}
           onCellClick={handleCellClick}
-          style={{borderRadius: '1em'}}
         />
       </MapContainer>
     </div>
