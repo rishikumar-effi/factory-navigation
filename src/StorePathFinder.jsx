@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import PathFinder from "./utils/pathFinder";
-import { MapContainer, Rectangle } from "react-leaflet";
+import { MapContainer, Rectangle, Marker, Tooltip } from "react-leaflet";
 
 const CELL_SIZE = 20; // pixels per grid cell
 
@@ -174,11 +174,14 @@ const StorePathfinderMap = () => {
     return pf;
   });
 
-  const findPath = useCallback(() => {
-    const selectedProduct = itemsDatabase.find(item => item.productId === +selectedItem);
-    if (!selectedItem || !selectedProduct) return;
+  const findPath = useCallback((targetProduct = null) => {
+    const selected = targetProduct
+      ? targetProduct
+      : itemsDatabase.find(item => item.productId === +selectedItem);
 
-    const { productName, coOrds } = selectedProduct;
+    if (!selected) return;
+
+    const { coOrds } = selected;
 
     const tempGrid = grid.map(row => row.map(cell => (cell === 1 ? 1 : 0)));
     pathfinder.setGrid(tempGrid);
@@ -248,6 +251,33 @@ const StorePathfinderMap = () => {
           itemsDatabase={itemsDatabase}
           onCellClick={handleCellClick}
         />
+        {itemsDatabase.map((item) =>
+          item.coOrds.map(({ x, y }) => (
+            <Marker
+              key={`${item.productId}-${x}-${y}`}
+              position={[
+                x * CELL_SIZE + CELL_SIZE / 2,
+                y * CELL_SIZE + CELL_SIZE / 2,
+              ]}
+              icon={L.divIcon({
+                className: "product-marker",
+                html: `<div style="background:#f97316;width:10px;height:10px;border-radius:50%;"></div>`,
+                iconSize: [10, 10],
+              })}
+              eventHandlers={{
+                click: () => {
+                  findPath(item);
+                  setSelectedItem(item.productId);
+                },
+              }}
+            >
+              <Tooltip direction="top" offset={[0, -10]} permanent={false} sticky>
+                {item.productName}
+              </Tooltip>
+            </Marker>
+          ))
+        )}
+
       </MapContainer>
     </div>
   );
