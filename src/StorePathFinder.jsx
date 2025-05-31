@@ -13,8 +13,8 @@ const GridLayer = ({ grid, startPos, paths, itemsDatabase, onCellClick }) => {
         row.map((cell, y) => {
           const isStart = startPos.x === x && startPos.y === y;
           const isPath = paths.some((p) => p.x === x && p.y === y);
-          const isItem = itemsDatabase.some(
-            ({ coOrds }) => coOrds.x === x && coOrds.y === y
+          const isItem = itemsDatabase.some(({ coOrds }) =>
+            coOrds.some(({ x: ix, y: iy }) => ix === x && iy === y)
           );
 
           let color = "#fff";
@@ -138,30 +138,30 @@ const StorePathfinderMap = () => {
 
   const [grid] = useState(initialGrid);
   const itemsDatabase = [
-    { productId: 101, productName: "Beer", coOrds: { x: 1, y: 2 } },
-    { productId: 102, productName: "Frozen Goods", coOrds: { x: 8, y: 3 } },
-    { productId: 103, productName: "Ice", coOrds: { x: 14, y: 2 } },
-    { productId: 104, productName: "Household", coOrds: { x: 19, y: 2 } },
-    { productId: 105, productName: "ATM", coOrds: { x: 19, y: 5 } },
-    { productId: 106, productName: "Lotto", coOrds: { x: 20, y: 11 } },
-    { productId: 107, productName: "Seasonal", coOrds: { x: 17, y: 12 } },
-    { productId: 108, productName: "Medical/Health", coOrds: { x: 15, y: 8 } },
-    { productId: 109, productName: "Candy", coOrds: { x: 13, y: 14 } },
-    { productId: 110, productName: "Jerky & Nuts", coOrds: { x: 11, y: 10 } },
-    { productId: 111, productName: "Chips", coOrds: { x: 9, y: 9 } },
-    { productId: 112, productName: "Breakfast", coOrds: { x: 7, y: 12 } },
-    { productId: 113, productName: "Dry Goods", coOrds: { x: 7, y: 21 } },
-    { productId: 114, productName: "Specials", coOrds: { x: 13, y: 22 } },
-    { productId: 115, productName: "Roller Grill", coOrds: { x: 5, y: 10 } },
-    { productId: 116, productName: "POS", coOrds: { x: 15, y: 22 } },
-    { productId: 117, productName: "Hot Food", coOrds: { x: 16, y: 25 } },
-    { productId: 118, productName: "Magazines", coOrds: { x: 13, y: 28 } },
-    { productId: 119, productName: "Automotive", coOrds: { x: 6, y: 26 } },
-    { productId: 120, productName: "Tobacco Products", coOrds: { x: 14, y: 36 } },
-    { productId: 121, productName: "Condiments", coOrds: { x: 18, y: 40 } },
-    { productId: 122, productName: "Coffee Bar", coOrds: { x: 13, y: 40 } },
-    { productId: 123, productName: "Frozen Beverages", coOrds: { x: 8, y: 40 } },
-    { productId: 124, productName: "Soft Drinks", coOrds: { x: 2, y: 40 } },
+    { productId: 101, productName: "Beer", coOrds: [{ x: 1, y: 2 }] },
+    { productId: 102, productName: "Frozen Goods", coOrds: [{ x: 8, y: 3 }] },
+    { productId: 103, productName: "Ice", coOrds: [{ x: 14, y: 2 }] },
+    { productId: 104, productName: "Household", coOrds: [{ x: 19, y: 2 }] },
+    { productId: 105, productName: "ATM", coOrds: [{ x: 19, y: 5 }] },
+    { productId: 106, productName: "Lotto", coOrds: [{ x: 20, y: 11 }, { x: 20, y: 12 }] },
+    { productId: 107, productName: "Seasonal", coOrds: [{ x: 17, y: 12 }] },
+    { productId: 108, productName: "Medical/Health", coOrds: [{ x: 15, y: 8 }] },
+    { productId: 109, productName: "Candy", coOrds: [{ x: 13, y: 14 }] },
+    { productId: 110, productName: "Jerky & Nuts", coOrds: [{ x: 11, y: 10 }] },
+    { productId: 111, productName: "Chips", coOrds: [{ x: 9, y: 9 }] },
+    { productId: 112, productName: "Breakfast", coOrds: [{ x: 7, y: 12 }] },
+    { productId: 113, productName: "Dry Goods", coOrds: [{ x: 7, y: 21 }] },
+    { productId: 114, productName: "Specials", coOrds: [{ x: 13, y: 22 }] },
+    { productId: 115, productName: "Roller Grill", coOrds: [{ x: 5, y: 10 }] },
+    { productId: 116, productName: "POS", coOrds: [{ x: 15, y: 22 }] },
+    { productId: 117, productName: "Hot Food", coOrds: [{ x: 16, y: 25 }] },
+    { productId: 118, productName: "Magazines", coOrds: [{ x: 13, y: 28 }] },
+    { productId: 119, productName: "Automotive", coOrds: [{ x: 6, y: 26 }] },
+    { productId: 120, productName: "Tobacco Products", coOrds: [{ x: 14, y: 36 }, { x: 15, y: 36 }, { x: 16, y: 36 }, { x: 17, y: 36 }] },
+    { productId: 121, productName: "Condiments", coOrds: [{ x: 18, y: 40 }] },
+    { productId: 122, productName: "Coffee Bar", coOrds: [{ x: 13, y: 40 }] },
+    { productId: 123, productName: "Frozen Beverages", coOrds: [{ x: 8, y: 40 }] },
+    { productId: 124, productName: "Soft Drinks", coOrds: [{ x: 2, y: 40 }] },
   ];
 
   const [startPos, setStartPos] = useState({ x: 21, y: 18 });
@@ -175,29 +175,30 @@ const StorePathfinderMap = () => {
   });
 
   const findPath = useCallback(() => {
-    const selectedProduct = itemsDatabase.filter(item => item.productId === +selectedItem);
+    const selectedProduct = itemsDatabase.find(item => item.productId === +selectedItem);
+    if (!selectedItem || !selectedProduct) return;
 
-    if (!selectedItem || selectedProduct.length === 0) return;
+    const { productName, coOrds } = selectedProduct;
 
-    const { productId, productName, coOrds } = selectedProduct[0];
-
-    console.log(productName);
-
-    initialGrid[coOrds.x][coOrds.y] = productId;
-
-    const tempGrid = grid.map((row) => row.map((cell) => cell === 1 ? 1 : 0));
-
+    const tempGrid = grid.map(row => row.map(cell => (cell === 1 ? 1 : 0)));
     pathfinder.setGrid(tempGrid);
 
-    const foundPath = pathfinder.findPath(
-      startPos.x,
-      startPos.y,
-      coOrds.x,
-      coOrds.y
-    );
+    let bestPath = null;
+    let shortestLength = Infinity;
 
-    setPaths(foundPath.map(([x, y]) => ({ x, y })));
+    for (const { x, y } of coOrds) {
+      const path = pathfinder.findPath(startPos.x, startPos.y, x, y);
+      if (path.length > 0 && path.length < shortestLength) {
+        bestPath = path;
+        shortestLength = path.length;
+      }
+    }
+
+    if (bestPath) {
+      setPaths(bestPath.map(([x, y]) => ({ x, y })));
+    }
   }, [selectedItem, startPos, grid]);
+
 
   useEffect(() => {
     if (selectedItem) findPath();
