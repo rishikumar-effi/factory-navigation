@@ -142,17 +142,17 @@ const StorePathfinderMap = () => {
 
   const [grid] = useState(initialGrid);
   const itemsDatabase = [
-    { productId: 101, productName: "Beer", coOrds: [{ x: 1, y: 2 }] },
-    { productId: 102, productName: "Frozen Goods", coOrds: [{ x: 8, y: 3 }] },
+    { productId: 101, productName: "Beer", coOrds: [{ x: 1, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 2 }, { x: 3, y: 2 }] },
+    { productId: 102, productName: "Frozen Goods", coOrds: [{ x: 8, y: 3 }, { x: 9, y: 3 }] },
     { productId: 103, productName: "Ice", coOrds: [{ x: 14, y: 2 }] },
     { productId: 104, productName: "Household", coOrds: [{ x: 19, y: 2 }] },
     { productId: 105, productName: "ATM", coOrds: [{ x: 19, y: 5 }] },
     { productId: 106, productName: "Lotto", coOrds: [{ x: 20, y: 11 }, { x: 20, y: 12 }] },
     { productId: 107, productName: "Seasonal", coOrds: [{ x: 17, y: 12 }] },
-    { productId: 108, productName: "Medical/Health", coOrds: [{ x: 15, y: 8 }] },
-    { productId: 109, productName: "Candy", coOrds: [{ x: 13, y: 14 }] },
+    { productId: 108, productName: "Medical/Health", coOrds: [{ x: 15, y: 8 }, { x: 15, y: 9 }, { x: 15, y: 7 }, { x: 15, y: 10 }] },
+    { productId: 109, productName: "Candy", coOrds: [{ x: 13, y: 14 }, { x: 13, y: 15 }, { x: 13, y: 13 }, { x: 13, y: 12 }] },
     { productId: 110, productName: "Jerky & Nuts", coOrds: [{ x: 11, y: 10 }] },
-    { productId: 111, productName: "Chips", coOrds: [{ x: 9, y: 9 }] },
+    { productId: 111, productName: "Chips", coOrds: [{ x: 9, y: 8 }, { x: 9, y: 9 }, { x: 9, y: 10 }, { x: 9, y: 11 }] },
     { productId: 112, productName: "Breakfast", coOrds: [{ x: 7, y: 12 }] },
     { productId: 113, productName: "Dry Goods", coOrds: [{ x: 7, y: 21 }] },
     { productId: 114, productName: "Specials", coOrds: [{ x: 13, y: 22 }] },
@@ -247,7 +247,6 @@ const StorePathfinderMap = () => {
   }, [selectedItem, startPos]);
 
   const handleCellClick = (x, y) => {
-    console.log(x, y);
     if (grid[x][y] !== 1 && grid[x][y] !== 2) {
       setStartPos({ x, y });
       setPaths([]);
@@ -309,7 +308,6 @@ const StorePathfinderMap = () => {
         </Marker>
 
         {itemsDatabase.map((item) => {
-          // item.coOrds.map(({ x, y }) => {
           const { x, y } = item.coOrds[0];
           const key = `${item.productId}-${x}-${y}`;
           return <Marker
@@ -338,7 +336,6 @@ const StorePathfinderMap = () => {
               {item.productName}
             </Tooltip>
           </Marker>
-          // })
         }
         )}
 
