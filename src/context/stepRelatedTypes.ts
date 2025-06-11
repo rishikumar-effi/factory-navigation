@@ -9,10 +9,10 @@ export type Product = {
 };
 
 export type NavigationDataType = {
-    step1: { data: { image: '' }, valid: false },
-    step2: { data: { obstaclesArray: number[][] }, valid: false },
-    step3: { data: { productArray: Product[] }, valid: false },
-    step4: { data: { finalArray: [] }, valid: false }
+    step1: { data: { image: string }, valid: boolean },
+    step2: { data: { obstaclesArray: number[][] }, valid: boolean },
+    step3: { data: { productArray: Product[] }, valid: boolean },
+    step4: { data: { finalArray: [] }, valid: boolean }
 }
 
 export interface StepContextType {

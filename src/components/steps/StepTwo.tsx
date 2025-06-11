@@ -28,8 +28,10 @@ export const StepTwo = () => {
   const { data } = step2;
   const { obstaclesArray } = data;
 
+  console.log(obstaclesArray);
+
   return (
-   <LeafletCanvas obstaclesArray={obstaclesArray}>
+   <LeafletCanvas obstaclesArray={obstaclesArray} navigationData={navigationData}>
        <ObstacleLayer grid={obstaclesArray} />
    </LeafletCanvas>
   );

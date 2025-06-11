@@ -1,5 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Box } from "@mui/material";
+import { MapContainer, ImageOverlay } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { useSteps } from "../../hooks/useSteps";
+
+const IMAGE_WIDTH = 1000;
+const IMAGE_HEIGHT = 800;
 
 export const fileToBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -9,27 +16,55 @@ export const fileToBase64 = (file: File): Promise<string> => new Promise((resolv
 });
 
 export const StepOne = () => {
-    const [imageSrc, setImageSrc] = useState("");
+    const {updateStepData, navigationData} = useSteps();
+    const [imageSrc, setImageSrc] = useState(navigationData.step1.data.image);
 
-    const imageHandler = async (event) => {
+    const imageHandler = async (event: any) => {
         const file = event.target.files[0];
 
-        try{
+        if (!file) {
+            updateStepData('step1', {image: ''});
+            setImageSrc("");
+            return;
+        }
+
+        try {
             const base64 = await fileToBase64(file);
 
-            if(base64){
-                console.log('testing');
+            if (base64) {
+                updateStepData('step1', {image: base64});
                 setImageSrc(base64);
             }
         }
-        catch(error){
+        catch (error) {
             console.log(error);
         }
     }
 
-    return <Box sx={{ border: '2.5px dashed #959595', width: '100%', height: '100%', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-        {imageSrc && <Box component="img" sx={{width: '100%', height: '100%', position: 'absolute', inset: 0, zIndex: -1, objectFit: 'contain'}} src={imageSrc}></Box>}
-        {imageSrc && <Box sx={{width: '100%', height: '100%', background: '#000', position: 'absolute', inset: 0, zIndex: 1, maskImage: 'radial-gradient(#00000066 10%, #00000000)'}}></Box>}
-        <input type="file" onChange={imageHandler} style={{zIndex: 1}}/>
-    </Box>
+    return <>
+        <input type="file" onChange={imageHandler} style={{marginBottom: '12px'}}/>
+
+        {imageSrc && <Box sx={{ border: '2.5px dashed #959595', width: '100%', height: '100%', minHeight: '25em', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <MapContainer
+                crs={L.CRS.Simple}
+                bounds={[
+                    [0, 0],
+                    [IMAGE_HEIGHT, IMAGE_WIDTH],
+                ]}
+                style={{ height: "100%", width: "100%" }}
+                zoom={0}
+                minZoom={-2}
+                maxZoom={4}
+                zoomControl={true}
+            >
+                <ImageOverlay
+                    url={imageSrc}
+                    bounds={[
+                        [0, 0],
+                        [IMAGE_HEIGHT, IMAGE_WIDTH],
+                    ]}
+                />
+            </MapContainer>
+        </Box>}
+    </>
 }
