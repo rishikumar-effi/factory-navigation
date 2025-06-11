@@ -79,7 +79,7 @@ export const StepThree = () => {
           </option>
         ))}
       </select>
-      <LeafletCanvas obstaclesArray={obstaclesArray} navigationData={navigationData}>
+      <LeafletCanvas navigationData={navigationData}>
         <GridLayer grid={obstaclesArray} products={productArray} />
       </LeafletCanvas>
     </>

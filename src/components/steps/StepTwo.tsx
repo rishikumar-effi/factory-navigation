@@ -124,10 +124,8 @@ export const StepTwo = () => {
   });
 
   const isCellInAnyRectangle = (x: number, y: number, wallsArg = walls) => {
-    const cellMinLat = y * CELL_SIZE;
-    const cellMaxLat = (y + 1) * CELL_SIZE;
-    const cellMinLng = x * CELL_SIZE;
-    const cellMaxLng = (x + 1) * CELL_SIZE;
+    const cellCenterLat = y * CELL_SIZE + CELL_SIZE / 2;
+    const cellCenterLng = x * CELL_SIZE + CELL_SIZE / 2;
 
     for (const wall of wallsArg) {
       if (wall.type === "rectangle") {
@@ -144,12 +142,11 @@ export const StepTwo = () => {
           const minLng = Math.min(lng1, lng2);
           const maxLng = Math.max(lng1, lng2);
 
-          // Check if cell and rectangle overlap at all
           if (
-            cellMaxLat > minLat &&
-            cellMinLat < maxLat &&
-            cellMaxLng > minLng &&
-            cellMinLng < maxLng
+            cellCenterLat >= minLat &&
+            cellCenterLat <= maxLat &&
+            cellCenterLng >= minLng &&
+            cellCenterLng <= maxLng
           ) {
             return true;
           }
@@ -169,7 +166,7 @@ export const StepTwo = () => {
       }
       newGrid.push(row);
     }
-    
+
     setGrid(newGrid);
     updateStepData('step2', { obstaclesArray: newGrid });
   };
@@ -177,7 +174,7 @@ export const StepTwo = () => {
   const defineWalls = (props) => setWalls((prev) => [...prev, props]);
 
   return (<>
-    <LeafletCanvas obstaclesArray={obstaclesArray} navigationData={navigationData}>
+    <LeafletCanvas navigationData={navigationData}>
       <ObstacleLayer grid={obstaclesArray} />
       <IndoorMap walls={walls} defineWalls={defineWalls} />
     </LeafletCanvas>
