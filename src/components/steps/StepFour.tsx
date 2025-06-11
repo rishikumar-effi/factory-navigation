@@ -191,7 +191,7 @@ export const StepFour = () => {
           </option>
         ))}
       </select>
-      <LeafletCanvas obstaclesArray={grid}>
+      <LeafletCanvas navigationData={navigationData}>
         <GridLayer
           grid={grid}
           startPos={startPos}

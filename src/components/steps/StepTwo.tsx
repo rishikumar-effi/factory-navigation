@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Polygon, Rectangle, } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
@@ -6,6 +6,11 @@ import { useSteps } from "../../hooks/useSteps";
 import { LeafletCanvas } from "../LeafletCanvas";
 import { CELL_SIZE, OBSTACLE_COLOR, IMAGE_WIDTH, IMAGE_HEIGHT } from "../LeafletCanvas";
 import { CustomDrawControl } from "../../CustomDrawControl";
+
+type Wall = {
+  type: string;
+  latlngs: [number, number][];
+};
 
 const GRID_ROWS = Math.ceil(IMAGE_HEIGHT / CELL_SIZE);
 const GRID_COLS = Math.ceil(IMAGE_WIDTH / CELL_SIZE);
@@ -109,7 +114,7 @@ export const StepTwo = () => {
   const { data } = step2;
   const { obstaclesArray } = data;
 
-  const [walls, setWalls] = useState<any>([]);
+  const [walls, setWalls] = useState<Wall[]>([]);
 
   const [grid, setGrid] = useState<number[][]>(() => {
     const arr: number[][] = [];
@@ -122,6 +127,25 @@ export const StepTwo = () => {
     }
     return arr;
   });
+  useEffect(() => {
+    if (obstaclesArray && obstaclesArray.length > 0) {
+      const newWalls: Wall[] = [];
+      for (let y = 0; y < obstaclesArray.length; y++) {
+        for (let x = 0; x < obstaclesArray[0].length; x++) {
+          if (obstaclesArray[y][x] !== 0) {
+            newWalls.push({
+              type: "rectangle",
+              latlngs: [
+                [y * CELL_SIZE, x * CELL_SIZE],
+                [(y + 1) * CELL_SIZE, (x + 1) * CELL_SIZE],
+              ],
+            });
+          }
+        }
+      }
+      setWalls(newWalls);
+    }
+  }, [obstaclesArray]);
 
   const isCellInAnyRectangle = (x: number, y: number, wallsArg = walls) => {
     const cellCenterLat = y * CELL_SIZE + CELL_SIZE / 2;
