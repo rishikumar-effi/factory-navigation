@@ -1,15 +1,12 @@
 import './App.css'
-import LeafletDrawControl from './ObstacleCreator'
-import StorePathfinderMap from './StorePathFinder'
-import IndoorMap from './IndoorMap'
+import { StepProvider } from './context/StepContext'
+import { StepperComponent } from './components/StepperComponent'
 
 function App() {
   return (
-    <>
-      {/* <LeafletDrawControl/> */}
-      <StorePathfinderMap/>
-      {/* <IndoorMap/> */}
-    </>
+    <StepProvider>
+      <StepperComponent/>
+    </StepProvider>
   )
 }
 

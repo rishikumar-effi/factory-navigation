@@ -1,0 +1,32 @@
+export type GridType = number[][];
+
+export type CoOrd = { x: number; y: number };
+
+export type Product = {
+  productId: number;
+  productName: string;
+  coOrds: CoOrd[];
+};
+
+export type NavigationDataType = {
+    step1: { data: { image: '' }, valid: false },
+    step2: { data: { obstaclesArray: number[][] }, valid: false },
+    step3: { data: { productArray: Product[] }, valid: false },
+    step4: { data: { finalArray: [] }, valid: false }
+}
+
+export interface StepContextType {
+    toNext: () => void,
+    toPrevious: () => void,
+    reset: () => void,
+    activeStep: number,
+    setNxtBtnState: (state: boolean) => void,
+    updateStepData: (step: any, data: any) => void,
+    setStepValidity: (step: any, valid: boolean) => void,
+    navigationData: {
+        step1: { data: {image: any}, valid: boolean},
+        step2: { data: {obstaclesArray: GridType}, valid: boolean },
+        step3: { data: {productArray: Product[]}, valid: boolean },
+        step4: {data: {finalArray: any}, valid: boolean}
+    }
+}
