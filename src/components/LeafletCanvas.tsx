@@ -9,8 +9,8 @@ export const PRODUCT_COLOR = "#5c5c5c";
 export const OBSTACLE_COLOR = "#333";
 export const PATH_COLOR = "#e0e0e0";
 export const PATH_HIGHLIGHT_COLOR = "#4ade80";
-const IMAGE_WIDTH = 1000;
-const IMAGE_HEIGHT = 800;
+export const IMAGE_WIDTH = 1000;
+export const IMAGE_HEIGHT = 800;
 
 export const LeafletCanvas = ({ obstaclesArray, children, navigationData }) => {
   const imageSrc = navigationData.step1.data.image;

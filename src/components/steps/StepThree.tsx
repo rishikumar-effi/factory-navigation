@@ -65,6 +65,8 @@ export const StepThree = () => {
   const { obstaclesArray } = navigationData.step2.data;
   const { productArray } = navigationData.step3.data;
 
+  console.log(obstaclesArray);
+
   return (
     <>
     <select
