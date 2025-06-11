@@ -169,11 +169,9 @@ export const StepTwo = () => {
       }
       newGrid.push(row);
     }
-    setGrid(newGrid);
-
-    updateStepData('step2', { obstaclesArray: grid })
     
-    console.log(newGrid);
+    setGrid(newGrid);
+    updateStepData('step2', { obstaclesArray: newGrid });
   };
 
   const defineWalls = (props) => setWalls((prev) => [...prev, props]);
