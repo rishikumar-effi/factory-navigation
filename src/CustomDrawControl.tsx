@@ -7,12 +7,19 @@ import "leaflet-draw";
 // @ts-ignore: leaflet-draw augments L.Control at runtime
 const drawnItems = new L.FeatureGroup();
 
+type CustomDrawControlProps = {
+  onShapeDrawn: (latlngs: any, type: string, layer?: any) => void;
+  onShapeDeleted?: (deletedLatLngs: any[]) => void;
+  onShapeEdited?: (editedShapes: any[]) => void;
+  mode?: string;
+};
+
 export const CustomDrawControl = ({
     onShapeDrawn,
     onShapeDeleted,
     onShapeEdited,
     mode = "grid",
-}) => {
+}: CustomDrawControlProps) => {
     const map = useMap();
 
     useEffect(() => {
@@ -38,9 +45,7 @@ export const CustomDrawControl = ({
                 },
                 circle: false,
                 marker: false,
-                polyline: {
-                    shapeOptions: { color: "#16a34a", weight: 4 },
-                },
+                polyline: false,
                 circlemarker: false,
             },
             edit: editOptions,

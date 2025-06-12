@@ -119,8 +119,8 @@ export const StepProvider = ({ children }) => {
         continueHandlerRef.current = handler;
     }
 
-    const handleNext = async() => {
-        if(continueHandlerRef.current){
+    const handleNext = async () => {
+        if (continueHandlerRef.current) {
             await continueHandlerRef.current();
         }
 
@@ -176,13 +176,13 @@ export const StepProvider = ({ children }) => {
                                             >
                                                 {index === steps.length - 1 ? 'Finish' : 'Continue'}
                                             </Button>
-                                            <Button
-                                                disabled={index === 0}
+                                            {index !== 0 && <Button
                                                 onClick={handleBack}
                                                 sx={{ mt: 1, mr: 1 }}
                                             >
                                                 Back
-                                            </Button>
+                                            </Button>}
+
                                         </Box>
                                     </StepContent>
                                 </Step>

@@ -26,7 +26,7 @@ export interface StepContextType {
     navigationData: {
         step1: { data: {image: any}, valid: boolean},
         step2: { data: {walls: Array<any>}, valid: boolean },
-        step3: { data: {productArray: Product[]}, valid: boolean },
+        step3: { data: {productArray: Array<any>}, valid: boolean },
         step4: {data: {finalArray: any}, valid: boolean}
     },
     setContinueHandler: (handler: () => void | Promise<void>) => void
