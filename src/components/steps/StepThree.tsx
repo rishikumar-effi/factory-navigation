@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Rectangle, Polygon, Polyline, Marker, Tooltip } from "react-leaflet";
+import { Rectangle, Marker, Tooltip } from "react-leaflet";
 import L from "leaflet";
 import { useSteps } from "../../hooks/useSteps";
 import { OBSTACLE_COLOR, LeafletCanvas } from "../LeafletCanvas";
@@ -7,12 +7,51 @@ import { CustomDrawControl } from "../../CustomDrawControl";
 
 type Wall = {
   id: string;
-  type: "rectangle" | "polygon" | "polyline";
+  type: "rectangle";
   latlngs: [number, number][];
-  productId?: string;
+  productId: string;
 };
 
-const WallLayer = ({ walls, color }) => (
+const PRODUCT_COLOR = "#1976d2";
+
+const ProductWallLayer = ({
+  walls = [],
+  productArray = [],
+}: {
+  walls?: Wall[];
+  productArray?: any[];
+}) => (
+  <>
+    {walls.map((wall) => {
+      const product = productArray.find((p) => p.productId === wall.productId);
+      return (
+        <Rectangle
+          key={wall.id}
+          bounds={wall.latlngs}
+          pathOptions={{ color: PRODUCT_COLOR, weight: 2, fillOpacity: 0.5 }}
+        >
+          {product && (
+            <Marker
+              position={[
+                (wall.latlngs[0][0] + wall.latlngs[1][0]) / 2,
+                (wall.latlngs[0][1] + wall.latlngs[1][1]) / 2,
+              ]}
+              icon={L.divIcon({
+                className: "product-marker",
+                html: `<div style="transform: translateY(-10px)">${product.productName}</div>`,
+                iconSize: [60, 20],
+              })}
+            >
+              <Tooltip>{product.productName}</Tooltip>
+            </Marker>
+          )}
+        </Rectangle>
+      );
+    })}
+  </>
+);
+
+const WallLayer = ({ walls = [], color }: { walls?: any[]; color: string }) => (
   <>
     {walls.map((wall) =>
       wall.type === "rectangle" ? (
@@ -21,86 +60,105 @@ const WallLayer = ({ walls, color }) => (
           bounds={wall.latlngs}
           pathOptions={{ color, weight: 2, fillOpacity: 0.5 }}
         />
-      ) : wall.type === "polygon" ? (
-        <Polygon
-          key={wall.id}
-          positions={wall.latlngs}
-          pathOptions={{ color, weight: 2, fillOpacity: 0.5 }}
-        />
-      ) : wall.type === "polyline" ? (
-        <Polyline
-          key={wall.id}
-          positions={wall.latlngs}
-          pathOptions={{ color, weight: 4 }}
-        />
       ) : null
     )}
   </>
 );
 
-const ProductWallMarkers = ({ walls, productArray }) => (
-  <>
-    {walls.map((wall) => {
-      const product = productArray.find((p) => p.productId === wall.productId);
-      if (!product) return null;
-      let center: any;
-      if (wall.type === "rectangle" && wall.latlngs.length === 2) {
-        center = [
-          (wall.latlngs[0][0] + wall.latlngs[1][0]) / 2,
-          (wall.latlngs[0][1] + wall.latlngs[1][1]) / 2,
-        ];
-      } else if (wall.latlngs.length > 0) {
-        center = Array.isArray(wall.latlngs[0])
-          ? wall.latlngs[0]
-          : [wall.latlngs[0].lat, wall.latlngs[0].lng];
-      } else {
-        return null;
-      }
-      return (
-        <Marker
-          key={wall.id}
-          position={center}
-          icon={L.divIcon({
-            className: "product-marker",
-            html: `<div style="transform: translateY(-10px)">${product.productName}</div>`,
-            iconSize: [60, 20],
-          })}
-        >
-          <Tooltip>{product.productName}</Tooltip>
-        </Marker>
-      );
-    })}
-  </>
-);
-
 export const StepThree = () => {
-  const { navigationData } = useSteps();
-  const { walls } = navigationData.step2.data;
-  const { productArray } = navigationData.step3.data;
+  const { navigationData, updateStepData, setContinueHandler, setStepValidity } = useSteps();
+  const { walls = [] } = navigationData.step2.data || {};
+  const { productWalls = [], productArray = [] } = navigationData.step3.data || {};
 
-  const [step3Walls, setStep3Walls] = useState<Wall[]>([]);
+  // Prepopulate from context on mount
+  const [rectangles, setRectangles] = useState<Wall[]>(() => productWalls || []);
   const [selectedProductId, setSelectedProductId] = useState("");
 
-  const handleShapeDrawn = (latlngs, type, layer) => {
+  // Sync rectangles to context
+  useEffect(() => {
+    updateStepData("step3", { productWalls: rectangles });
+  }, [rectangles, updateStepData]);
+
+  // Set continue handler and validity
+  useEffect(() => {
+    const handleContinue = () => {
+      updateStepData("step3", { productWalls: rectangles });
+      setStepValidity("step3", true);
+    };
+    setContinueHandler(handleContinue);
+    return () => setContinueHandler(() => {});
+  }, [rectangles, updateStepData, setStepValidity, setContinueHandler]);
+
+  // Drawing handler
+  const handleShapeDrawn = (latlngs: any, type: string, layer?: any) => {
+    if (type !== "rectangle") return;
     if (!selectedProductId) {
       alert("Please select a product before drawing.");
       return;
     }
     const wallWithId: Wall = {
       id: crypto.randomUUID(),
-      type,
+      type: "rectangle",
       latlngs,
       productId: selectedProductId,
     };
-    setStep3Walls((prev) => [...prev, wallWithId]);
+    setRectangles((prev) => [...prev, wallWithId]);
     if (layer && wallWithId.id) {
       layer.options.wallId = wallWithId.id;
     }
   };
 
-  useEffect(() => {
-    console.log(step3Walls);
-  }, [step3Walls])
+  // Deletion handler
+  const getBoundsFromLatLngs = (latlngs: any) => {
+    if (latlngs.length === 2 && Array.isArray(latlngs[0]) && Array.isArray(latlngs[1])) {
+      return latlngs;
+    }
+    const flat = latlngs.flat();
+    const lats = flat.map((p: any) => Array.isArray(p) ? p[0] : p.lat);
+    const lngs = flat.map((p: any) => Array.isArray(p) ? p[1] : p.lng);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+    return [
+      [minLat, minLng],
+      [maxLat, maxLng],
+    ];
+  };
+
+  const areBoundsEqual = (a: any, b: any) => {
+    return (
+      Math.abs(a[0][0] - b[0][0]) < 1e-8 &&
+      Math.abs(a[0][1] - b[0][1]) < 1e-8 &&
+      Math.abs(a[1][0] - b[1][0]) < 1e-8 &&
+      Math.abs(a[1][1] - b[1][1]) < 1e-8
+    );
+  };
+
+  const handleShapesDeleted = (deletedLatLngs: any[]) => {
+    const filtered = rectangles.filter((wall) => {
+      const wallBounds = getBoundsFromLatLngs(wall.latlngs);
+      return !deletedLatLngs.some((deleted) => {
+        const deletedBounds = getBoundsFromLatLngs(deleted);
+        return areBoundsEqual(wallBounds, deletedBounds);
+      });
+    });
+    setRectangles(filtered);
+    updateStepData("step3", { productWalls: filtered });
+  };
+
+  // Edit handler (optional, similar to StepTwo)
+  const handleShapesEdited = (editedShapes: any[]) => {
+    let updated = [...rectangles];
+    editedShapes.forEach(({ latlngs, wallId }) => {
+      const idx = updated.findIndex((wall) => wall.id === wallId);
+      if (idx !== -1) {
+        updated[idx] = { ...updated[idx], latlngs };
+      }
+    });
+    setRectangles(updated);
+    updateStepData("step3", { productWalls: updated });
+  };
 
   return (
     <>
@@ -115,7 +173,7 @@ export const StepThree = () => {
         }}
       >
         <option value="">Select Item</option>
-        {productArray.map(({ productId, productName }) => (
+        {productArray.map(({ productId, productName }: any) => (
           <option key={productId} value={productId}>
             {productName}
           </option>
@@ -123,10 +181,11 @@ export const StepThree = () => {
       </select>
       <LeafletCanvas navigationData={navigationData}>
         <WallLayer walls={walls} color={OBSTACLE_COLOR} />
-        <WallLayer walls={step3Walls} color="#1976d2" />
-        <ProductWallMarkers walls={step3Walls} productArray={productArray} />
+        <ProductWallLayer walls={rectangles} productArray={productArray} />
         <CustomDrawControl
           onShapeDrawn={handleShapeDrawn}
+          onShapeDeleted={handleShapesDeleted}
+          onShapeEdited={handleShapesEdited}
         />
       </LeafletCanvas>
     </>

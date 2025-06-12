@@ -1,4 +1,4 @@
-import { createContext, useReducer, useState, useRef } from 'react';
+import { createContext, useReducer, useState, useRef, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Stepper from '@mui/material/Stepper';
@@ -51,7 +51,8 @@ const defaultValue: NavigationDataType = {
                 { productId: 122, productName: "Coffee Bar", coOrds: [] },
                 { productId: 123, productName: "Frozen Beverages", coOrds: [] },
                 { productId: 124, productName: "Soft Drinks", coOrds: [] },
-            ]
+            ],
+            productWalls: []
         }, valid: false
     },
     step4: { data: { finalArray: [] }, valid: false }
@@ -115,33 +116,33 @@ export const StepProvider = ({ children }) => {
 
     const setNxtBtnState = (state: boolean) => setIsNextActive(state);
 
-    const setContinueHandler = (handler: () => void | Promise<void>) => {
+    const setContinueHandler = useCallback((handler: () => void | Promise<void>) => {
         continueHandlerRef.current = handler;
-    }
+    }, [])
 
-    const handleNext = async () => {
+    const handleNext = useCallback(async () => {
         if (continueHandlerRef.current) {
             await continueHandlerRef.current();
         }
 
         setActiveStep((prevActiveStep) => prevActiveStep + 1);
-    };
+    }, []);
 
-    const handleBack = () => {
+    const handleBack = useCallback(() => {
         setActiveStep((prevActiveStep) => prevActiveStep - 1);
-    };
+    }, []);
 
-    const handleReset = () => {
+    const handleReset = useCallback(() => {
         setActiveStep(0);
-    };
+    }, []);
 
-    const updateStepData = (step: keyof NavigationDataType, data: any) => {
+    const updateStepData = useCallback((step: keyof NavigationDataType, data: any) => {
         dispatch({ type: 'UPDATE_STEP_DATA', step, payload: data });
-    };
+    }, []);
 
-    const setStepValidity = (step: keyof NavigationDataType, valid: boolean) => {
+    const setStepValidity = useCallback((step: keyof NavigationDataType, valid: boolean) => {
         dispatch({ type: 'SET_STEP_VALIDITY', step, valid });
-    };
+    }, []);
 
     const values = {
         activeStep, toNext: handleNext, toPrevious: handleBack, reset: handleReset, setNxtBtnState, updateStepData, setStepValidity, navigationData, setContinueHandler
