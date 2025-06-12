@@ -7,7 +7,7 @@ export const StepperComponent = () => {
 
     const stepperComponentsMap = [<StepOne />, <StepTwo />, <StepThree />, <StepFour />];
 
-    return <Zoom in={true} key={activeStep} style={{transitionDelay: "300ms"}} >
+    return <Zoom in={true} key={activeStep} style={{ transitionDelay: "300ms" }} >
         <Box sx={{ display: 'grid', placeItems: 'center', minHeight: '20em' }}>
             {stepperComponentsMap[activeStep]}
         </Box>

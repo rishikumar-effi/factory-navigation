@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Box } from "@mui/material";
 import { MapContainer, ImageOverlay } from "react-leaflet";
 import L from "leaflet";
@@ -16,14 +16,30 @@ export const fileToBase64 = (file: File): Promise<string> => new Promise((resolv
 });
 
 export const StepOne = () => {
-    const {updateStepData, navigationData} = useSteps();
+    const {updateStepData, navigationData, setNxtBtnState, setStepValidity, setContinueHandler} = useSteps();
     const [imageSrc, setImageSrc] = useState(navigationData.step1.data.image);
+
+    useEffect(() => {
+        if (!imageSrc) return;
+
+        const handler = () => {
+            updateStepData("step1", { image: imageSrc });
+        };
+
+        setContinueHandler(handler);
+
+        return () => {
+            setContinueHandler(() => {});
+        };
+    }, [imageSrc]);
 
     const imageHandler = async (event: any) => {
         const file = event.target.files[0];
 
         if (!file) {
-            updateStepData('step1', {image: ''});
+            // updateStepData('step1', {image: ''});
+            setStepValidity('step1', false);
+            setNxtBtnState(false)
             setImageSrc("");
             return;
         }
@@ -32,7 +48,9 @@ export const StepOne = () => {
             const base64 = await fileToBase64(file);
 
             if (base64) {
-                updateStepData('step1', {image: base64});
+                // updateStepData('step1', {image: base64});
+                setStepValidity('step1', true);
+                setNxtBtnState(true);
                 setImageSrc(base64);
             }
         }

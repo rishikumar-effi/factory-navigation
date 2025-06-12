@@ -28,5 +28,6 @@ export interface StepContextType {
         step2: { data: {obstaclesArray: GridType}, valid: boolean },
         step3: { data: {productArray: Product[]}, valid: boolean },
         step4: {data: {finalArray: any}, valid: boolean}
-    }
+    },
+    setContinueHandler: (handler: () => void | Promise<void>) => void
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Polygon, Rectangle, } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
@@ -6,6 +6,7 @@ import { useSteps } from "../../hooks/useSteps";
 import { LeafletCanvas } from "../LeafletCanvas";
 import { CELL_SIZE, OBSTACLE_COLOR, IMAGE_WIDTH, IMAGE_HEIGHT } from "../LeafletCanvas";
 import { CustomDrawControl } from "../../CustomDrawControl";
+import { Button } from "@mui/material";
 
 type Wall = {
   type: string;
@@ -109,7 +110,7 @@ const ObstacleLayer = ({ grid }: { grid: number[][] }) => (
 );
 
 export const StepTwo = () => {
-  const { navigationData, updateStepData } = useSteps();
+  const { navigationData, updateStepData, setContinueHandler, setStepValidity } = useSteps();
   const { step2 } = navigationData;
   const { data } = step2;
   const { obstaclesArray } = data;
@@ -127,8 +128,10 @@ export const StepTwo = () => {
     }
     return arr;
   });
+
   useEffect(() => {
     if (obstaclesArray && obstaclesArray.length > 0) {
+      console.log('testing');
       const newWalls: Wall[] = [];
       for (let y = 0; y < obstaclesArray.length; y++) {
         for (let x = 0; x < obstaclesArray[0].length; x++) {
@@ -180,7 +183,7 @@ export const StepTwo = () => {
     return false;
   };
 
-  const buildGridFromRectangles = () => {
+  const buildGridFromRectangles = useCallback(() => {
     const newGrid: number[][] = [];
     for (let y = 0; y < GRID_ROWS; y++) {
       const row: number[] = [];
@@ -193,16 +196,23 @@ export const StepTwo = () => {
 
     setGrid(newGrid);
     updateStepData('step2', { obstaclesArray: newGrid });
-  };
+    setStepValidity('step2', true);
+  }, [walls]);
+
+  useEffect(() => {
+    setContinueHandler(buildGridFromRectangles);
+
+    return () => {
+      setContinueHandler(() => { });
+    };
+  }, [buildGridFromRectangles]);
 
   const defineWalls = (props) => setWalls((prev) => [...prev, props]);
 
-  return (<>
+  return (
     <LeafletCanvas navigationData={navigationData}>
       <ObstacleLayer grid={obstaclesArray} />
       <IndoorMap walls={walls} defineWalls={defineWalls} />
     </LeafletCanvas>
-    <button onClick={buildGridFromRectangles}>Generate Grid</button>
-  </>
   );
 };

@@ -109,9 +109,21 @@ export const StepProvider = ({ children }) => {
 
     const [isNextActive, setIsNextActive] = useState<boolean>(false);
 
+    const [navigationData, dispatch] = useReducer(reducer, initialRef.current, (init) => init);
+
+    const continueHandlerRef = useRef<(() => void | Promise<void>)>(null);
+
     const setNxtBtnState = (state: boolean) => setIsNextActive(state);
 
-    const handleNext = () => {
+    const setContinueHandler = (handler: () => void | Promise<void>) => {
+        continueHandlerRef.current = handler;
+    }
+
+    const handleNext = async() => {
+        if(continueHandlerRef.current){
+            await continueHandlerRef.current();
+        }
+
         setActiveStep((prevActiveStep) => prevActiveStep + 1);
     };
 
@@ -131,21 +143,19 @@ export const StepProvider = ({ children }) => {
         dispatch({ type: 'SET_STEP_VALIDITY', step, valid });
     };
 
-    const [navigationData, dispatch] = useReducer(reducer, initialRef.current, (init) => init);
-
     const values = {
-        activeStep, toNext: handleNext, toPrevious: handleBack, reset: handleReset, setNxtBtnState, updateStepData, setStepValidity, navigationData
+        activeStep, toNext: handleNext, toPrevious: handleBack, reset: handleReset, setNxtBtnState, updateStepData, setStepValidity, navigationData, setContinueHandler
     }
 
     return (
         <StepContext.Provider value={values}>
-            <Box component="main" sx={{m: 2}}>
+            <Box component="main" sx={{ m: 2 }}>
                 <Box component="section" sx={{ display: 'flex', padding: '2rem', alignItems: 'center', gap: 4 }}>
                     <Box component="aside" sx={{ maxWidth: 300 }}>
                         <Typography variant="h1" style={{ fontSize: '32px', textAlign: 'center', letterSpacing: '1px', marginBottom: '1em' }}>Floor Navigation</Typography>
                         <Stepper activeStep={activeStep} orientation="vertical">
                             {steps.map((step, index) => (
-                                <Step sx={{'& .MuiStepIcon-root.Mui-completed': {color: '#88dc3e'}, '& .MuiStepLabel-label': { color: '#cecece', fontSize: '16px' }, '& .MuiStepLabel-label.Mui-completed': { color: '#cecece' }, '& .MuiStepLabel-label.Mui-active': { color: '#fff' }, '& .MuiTypography-root': { textAlign: 'left', color: '#bdbdbd', fontSize: '14px' }}} key={step.label}>
+                                <Step sx={{ '& .MuiStepIcon-root.Mui-completed': { color: '#88dc3e' }, '& .MuiStepLabel-label': { color: '#cecece', fontSize: '16px' }, '& .MuiStepLabel-label.Mui-completed': { color: '#cecece' }, '& .MuiStepLabel-label.Mui-active': { color: '#fff' }, '& .MuiTypography-root': { textAlign: 'left', color: '#bdbdbd', fontSize: '14px' } }} key={step.label}>
                                     <StepLabel
                                         optional={
                                             index === steps.length - 1 ? (
@@ -159,9 +169,10 @@ export const StepProvider = ({ children }) => {
                                         <Typography>{step.description}</Typography>
                                         <Box sx={{ mb: 2 }}>
                                             <Button
+                                                disabled={!isNextActive}
                                                 variant="contained"
                                                 onClick={handleNext}
-                                                sx={{ mt: 1, mr: 1 }}
+                                                sx={{ mt: 1, mr: 1, '&.Mui-disabled': { background: '#2d68a3', opacity: '.8', color: '#fff', cursor: 'not-allowed' } }}
                                             >
                                                 {index === steps.length - 1 ? 'Finish' : 'Continue'}
                                             </Button>
