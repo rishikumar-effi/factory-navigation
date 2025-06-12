@@ -1,31 +1,29 @@
 import { useState, useEffect } from "react";
-import { Polygon, Rectangle, } from "react-leaflet";
+import { Polygon, Rectangle } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
 import { useSteps } from "../../hooks/useSteps";
 import { LeafletCanvas } from "../LeafletCanvas";
-// import { CELL_SIZE, IMAGE_WIDTH, IMAGE_HEIGHT } from "../LeafletCanvas";
 import { CustomDrawControl } from "../../CustomDrawControl";
 
 type Wall = {
+  id: string;
   type: string;
   latlngs: [number, number][];
 };
 
-// const GRID_ROWS = Math.ceil(IMAGE_HEIGHT / CELL_SIZE);
-// const GRID_COLS = Math.ceil(IMAGE_WIDTH / CELL_SIZE);
-
-const IndoorMap = ({ walls, defineWalls }) => {
+const IndoorMap = ({ walls, defineWalls, handleShapesDeleted, handleShapesEdited }) => {
   function normalizeLatLngArray(input: any): [number, number][] {
     return input.map((point: any) =>
       Array.isArray(point) ? point : [point.lat, point.lng]
     );
   }
 
-  const handleShapeCreated = (latlngs: any, type: any) => {
+  // When a shape is created, assign a unique id and set it on the Leaflet layer
+  const handleShapeCreated = (latlngs: any, type: any, layer?: any) => {
+    let bounds: [[number, number], [number, number]] | undefined;
+    let wallWithId;
     if (type === "rectangle") {
-      let bounds: [[number, number], [number, number]];
-
       if (Array.isArray(latlngs)) {
         if (
           latlngs.length === 2 &&
@@ -58,28 +56,39 @@ const IndoorMap = ({ walls, defineWalls }) => {
           console.warn("Unknown rectangle format:", latlngs);
           return;
         }
-
-        defineWalls({ latlngs: bounds, type })
+        wallWithId = { latlngs: bounds, type, id: crypto.randomUUID() };
       }
-    } else {
-      defineWalls({ latlngs, type })
+    }
+     else {
+      wallWithId = { latlngs, type, id: crypto.randomUUID() };
+    }
+    if (wallWithId) {
+      defineWalls(wallWithId);
+      // Set wallId on the Leaflet layer so edits can be tracked
+      if (layer && wallWithId.id) {
+        layer.options.wallId = wallWithId.id;
+      }
     }
   };
 
   return (
     <>
-      <CustomDrawControl onShapeDrawn={handleShapeCreated} />
+      <CustomDrawControl
+        onShapeDrawn={handleShapeCreated}
+        onShapeDeleted={handleShapesDeleted}
+        onShapeEdited={handleShapesEdited}
+      />
 
       {walls.map((wall, idx) =>
         wall.type === "rectangle" ? (
           <Rectangle
-            key={idx}
+            key={wall.id}
             bounds={wall.latlngs}
             pathOptions={{ color: "black", fillOpacity: 0.5 }}
           />
         ) : (
           <Polygon
-            key={idx}
+            key={wall.id}
             positions={wall.latlngs}
             pathOptions={{ color: "black", fillOpacity: 0.5 }}
           />
@@ -89,25 +98,6 @@ const IndoorMap = ({ walls, defineWalls }) => {
   );
 };
 
-// const ObstacleLayer = ({ grid }: { grid: number[][] }) => (
-//   <>
-//     {grid.map((row, x) =>
-//       row.map((cell, y) =>
-//         cell !== 0 ? (
-//           <Rectangle
-//             key={`${x}-${y}`}
-//             bounds={[
-//               [x * CELL_SIZE, y * CELL_SIZE],
-//               [(x + 1) * CELL_SIZE, (y + 1) * CELL_SIZE],
-//             ]}
-//             pathOptions={{ color: OBSTACLE_COLOR, weight: 1, fillOpacity: 0.8 }}
-//           />
-//         ) : null
-//       )
-//     )}
-//   </>
-// );
-
 export const StepTwo = () => {
   const { navigationData, updateStepData, setContinueHandler, setStepValidity } = useSteps();
   const { step2 } = navigationData;
@@ -116,83 +106,102 @@ export const StepTwo = () => {
 
   const [walls, setWalls] = useState<Wall[]>([]);
 
-  // const isCellInAnyRectangle = (x: number, y: number, wallsArg = walls) => {
-  //   const cellCenterLat = y * CELL_SIZE + CELL_SIZE / 2;
-  //   const cellCenterLng = x * CELL_SIZE + CELL_SIZE / 2;
-
-  //   for (const wall of wallsArg) {
-  //     if (wall.type === "rectangle") {
-  //       const latlngs = wall.latlngs;
-  //       if (
-  //         Array.isArray(latlngs) &&
-  //         latlngs.length === 2 &&
-  //         Array.isArray(latlngs[0]) && latlngs[0].length === 2 &&
-  //         Array.isArray(latlngs[1]) && latlngs[1].length === 2
-  //       ) {
-  //         const [[lat1, lng1], [lat2, lng2]] = latlngs;
-  //         const minLat = Math.min(lat1, lat2);
-  //         const maxLat = Math.max(lat1, lat2);
-  //         const minLng = Math.min(lng1, lng2);
-  //         const maxLng = Math.max(lng1, lng2);
-
-  //         if (
-  //           cellCenterLat >= minLat &&
-  //           cellCenterLat <= maxLat &&
-  //           cellCenterLng >= minLng &&
-  //           cellCenterLng <= maxLng
-  //         ) {
-  //           return true;
-  //         }
-  //       }
-  //     }
-  //   }
-  //   return false;
-  // };
-
-  // const buildGridFromRectangles = () => {
-  //   const newGrid: number[][] = [];
-  //   for (let y = 0; y < GRID_ROWS; y++) {
-  //     const row: number[] = [];
-  //     for (let x = 0; x < GRID_COLS; x++) {
-  //       const isObstacle = isCellInAnyRectangle(x, y, walls);
-  //       row.push(isObstacle ? 1 : 0);
-  //     }
-  //     newGrid.push(row);
-  //   }
-
-  //   setGrid(newGrid);
-  //   updateStepData('step2', { obstaclesArray: newGrid });
-  //   setStepValidity('step2', true);
-  // };
-
+  // Restore walls from context only on first mount
   useEffect(() => {
     if (walls.length === 0 && generatedWalls && generatedWalls.length > 0) {
       setWalls(generatedWalls);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     const handleContinue = () => {
       updateStepData('step2', { walls });
       setStepValidity('step2', true);
-    }
+    };
 
     setContinueHandler(handleContinue);
 
     return () => {
       setContinueHandler(() => { });
     };
-  }, [walls]);
+  }, [walls, updateStepData, setStepValidity, setContinueHandler]);
 
-  const defineWalls = (props) => {
-    const newWalls = [...walls, props];
-    setWalls(newWalls);
-    updateStepData('step2', { walls: newWalls });
+  // Add a new wall with unique id
+  const defineWalls = (wallWithId) => {
+    setWalls([...walls, wallWithId]);
+    updateStepData('step2', { walls: [...walls, wallWithId] });
+  };
+
+  const getBoundsFromLatLngs = (latlngs) => {
+    // Handles both polygon (array of 4+ points) and bounds (2 points)
+    if (latlngs.length === 2 && Array.isArray(latlngs[0]) && Array.isArray(latlngs[1])) {
+      // Already bounds
+      return latlngs;
+    }
+    // Polygon: get min/max
+    const flat = latlngs.flat();
+    const lats = flat.map((p) => Array.isArray(p) ? p[0] : p.lat);
+    const lngs = flat.map((p) => Array.isArray(p) ? p[1] : p.lng);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+    return [
+      [minLat, minLng],
+      [maxLat, maxLng],
+    ];
+  };
+
+  const areBoundsEqual = (a, b) => {
+    return (
+      Math.abs(a[0][0] - b[0][0]) < 1e-8 &&
+      Math.abs(a[0][1] - b[0][1]) < 1e-8 &&
+      Math.abs(a[1][0] - b[1][0]) < 1e-8 &&
+      Math.abs(a[1][1] - b[1][1]) < 1e-8
+    );
+  };
+
+  const handleShapesDeleted = (deletedLatLngs) => {
+    const filteredWalls = walls.filter(wall => {
+      if (wall.type === "rectangle") {
+        const wallBounds = getBoundsFromLatLngs(wall.latlngs);
+        return !deletedLatLngs.some(deleted => {
+          const deletedBounds = getBoundsFromLatLngs(deleted);
+          return areBoundsEqual(wallBounds, deletedBounds);
+        });
+      } else if (wall.type === "polygon") {
+        return !deletedLatLngs.some(
+          deleted => JSON.stringify(wall.latlngs) === JSON.stringify(deleted)
+        );
+      }
+      return true;
+    });
+    setWalls(filteredWalls);
+    updateStepData('step2', { walls: filteredWalls });
+  };
+
+  // Use wallId to update the correct wall after edit
+  const handleShapesEdited = (editedShapes) => {
+    let updatedWalls = [...walls];
+    editedShapes.forEach(({ latlngs, layerType, wallId }) => {
+      const idx = updatedWalls.findIndex(wall => wall.id === wallId);
+      if (idx !== -1) {
+        updatedWalls[idx] = { ...updatedWalls[idx], latlngs };
+      }
+    });
+    setWalls(updatedWalls);
+    updateStepData('step2', { walls: updatedWalls });
   };
 
   return (
     <LeafletCanvas navigationData={navigationData}>
-      <IndoorMap walls={walls} defineWalls={defineWalls} />
+      <IndoorMap
+        walls={walls}
+        defineWalls={defineWalls}
+        handleShapesDeleted={handleShapesDeleted}
+        handleShapesEdited={handleShapesEdited}
+      />
     </LeafletCanvas>
   );
 };
