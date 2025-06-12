@@ -73,8 +73,7 @@ export const StepThree = () => {
   // Prepopulate from context on mount
   const [rectangles, setRectangles] = useState<Wall[]>(() => productWalls || []);
   const [selectedProductId, setSelectedProductId] = useState("");
-
-  // Sync rectangles to context
+  const markedProductIds = new Set(rectangles.map(r => String(r.productId)));  // Sync rectangles to context
   useEffect(() => {
     updateStepData("step3", { productWalls: rectangles });
   }, [rectangles, updateStepData]);
@@ -86,7 +85,7 @@ export const StepThree = () => {
       setStepValidity("step3", true);
     };
     setContinueHandler(handleContinue);
-    return () => setContinueHandler(() => {});
+    return () => setContinueHandler(() => { });
   }, [rectangles, updateStepData, setStepValidity, setContinueHandler]);
 
   // Drawing handler
@@ -106,6 +105,7 @@ export const StepThree = () => {
     if (layer && wallWithId.id) {
       layer.options.wallId = wallWithId.id;
     }
+    setSelectedProductId(""); // <-- Clear selection after marking
   };
 
   // Deletion handler
@@ -174,7 +174,11 @@ export const StepThree = () => {
       >
         <option value="">Select Item</option>
         {productArray.map(({ productId, productName }: any) => (
-          <option key={productId} value={productId}>
+          <option
+            key={productId}
+            value={productId}
+            disabled={markedProductIds.has(String(productId))}
+          >
             {productName}
           </option>
         ))}
@@ -182,11 +186,14 @@ export const StepThree = () => {
       <LeafletCanvas navigationData={navigationData}>
         <WallLayer walls={walls} color={OBSTACLE_COLOR} />
         <ProductWallLayer walls={rectangles} productArray={productArray} />
-        <CustomDrawControl
-          onShapeDrawn={handleShapeDrawn}
-          onShapeDeleted={handleShapesDeleted}
-          onShapeEdited={handleShapesEdited}
-        />
+        {selectedProductId && (
+          <CustomDrawControl
+            onShapeDrawn={handleShapeDrawn}
+            onShapeDeleted={handleShapesDeleted}
+            onShapeEdited={handleShapesEdited}
+            mode="product"
+          />
+        )}
       </LeafletCanvas>
     </>
   );

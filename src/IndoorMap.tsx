@@ -7,7 +7,7 @@ import {
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
-import CustomDrawControl from "./CustomDrawControl";
+import { CustomDrawControl } from "./CustomDrawControl";
 
 const IMAGE_WIDTH = 1000;
 const IMAGE_HEIGHT = 800;
