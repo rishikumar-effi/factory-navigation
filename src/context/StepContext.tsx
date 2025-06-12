@@ -21,7 +21,7 @@ const defaultValue: NavigationDataType = {
     step1: { data: { image: "" }, valid: false },
     step2: {
         data: {
-            obstaclesArray: []
+            walls: []
         }, valid: false
     },
     step3: {

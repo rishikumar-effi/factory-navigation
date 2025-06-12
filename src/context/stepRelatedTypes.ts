@@ -10,7 +10,7 @@ export type Product = {
 
 export type NavigationDataType = {
     step1: { data: { image: string }, valid: boolean },
-    step2: { data: { obstaclesArray: number[][] }, valid: boolean },
+    step2: { data: { walls: Array<any> }, valid: boolean },
     step3: { data: { productArray: Product[] }, valid: boolean },
     step4: { data: { finalArray: [] }, valid: boolean }
 }
@@ -25,7 +25,7 @@ export interface StepContextType {
     setStepValidity: (step: any, valid: boolean) => void,
     navigationData: {
         step1: { data: {image: any}, valid: boolean},
-        step2: { data: {obstaclesArray: GridType}, valid: boolean },
+        step2: { data: {walls: Array<any>}, valid: boolean },
         step3: { data: {productArray: Product[]}, valid: boolean },
         step4: {data: {finalArray: any}, valid: boolean}
     },

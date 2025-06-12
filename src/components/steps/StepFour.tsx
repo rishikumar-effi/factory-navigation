@@ -71,12 +71,12 @@ export const StepFour = () => {
 
   const { step2, step3 } = navigationData;
 
-  const { obstaclesArray } = step2.data;
+  const { walls } = step2.data;
   const { productArray } = step3.data;
 
   const lastOpenMarkerRef = useRef<any>(null);
 
-  const [grid] = useState<GridType>(obstaclesArray);
+  const [grid] = useState<GridType>(walls);
 
   const itemsDatabase: Item[] = productArray;
 
@@ -86,7 +86,7 @@ export const StepFour = () => {
 
   const [pathfinder] = useState(() => {
     const pf = new PathFinder();
-    pf.setGrid(obstaclesArray);
+    pf.setGrid(walls);
     return pf;
   });
 

@@ -1,20 +1,19 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Polygon, Rectangle, } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
 import { useSteps } from "../../hooks/useSteps";
 import { LeafletCanvas } from "../LeafletCanvas";
-import { CELL_SIZE, OBSTACLE_COLOR, IMAGE_WIDTH, IMAGE_HEIGHT } from "../LeafletCanvas";
+// import { CELL_SIZE, IMAGE_WIDTH, IMAGE_HEIGHT } from "../LeafletCanvas";
 import { CustomDrawControl } from "../../CustomDrawControl";
-import { Button } from "@mui/material";
 
 type Wall = {
   type: string;
   latlngs: [number, number][];
 };
 
-const GRID_ROWS = Math.ceil(IMAGE_HEIGHT / CELL_SIZE);
-const GRID_COLS = Math.ceil(IMAGE_WIDTH / CELL_SIZE);
+// const GRID_ROWS = Math.ceil(IMAGE_HEIGHT / CELL_SIZE);
+// const GRID_COLS = Math.ceil(IMAGE_WIDTH / CELL_SIZE);
 
 const IndoorMap = ({ walls, defineWalls }) => {
   function normalizeLatLngArray(input: any): [number, number][] {
@@ -90,128 +89,109 @@ const IndoorMap = ({ walls, defineWalls }) => {
   );
 };
 
-const ObstacleLayer = ({ grid }: { grid: number[][] }) => (
-  <>
-    {grid.map((row, x) =>
-      row.map((cell, y) =>
-        cell !== 0 ? (
-          <Rectangle
-            key={`${x}-${y}`}
-            bounds={[
-              [x * CELL_SIZE, y * CELL_SIZE],
-              [(x + 1) * CELL_SIZE, (y + 1) * CELL_SIZE],
-            ]}
-            pathOptions={{ color: OBSTACLE_COLOR, weight: 1, fillOpacity: 0.8 }}
-          />
-        ) : null
-      )
-    )}
-  </>
-);
+// const ObstacleLayer = ({ grid }: { grid: number[][] }) => (
+//   <>
+//     {grid.map((row, x) =>
+//       row.map((cell, y) =>
+//         cell !== 0 ? (
+//           <Rectangle
+//             key={`${x}-${y}`}
+//             bounds={[
+//               [x * CELL_SIZE, y * CELL_SIZE],
+//               [(x + 1) * CELL_SIZE, (y + 1) * CELL_SIZE],
+//             ]}
+//             pathOptions={{ color: OBSTACLE_COLOR, weight: 1, fillOpacity: 0.8 }}
+//           />
+//         ) : null
+//       )
+//     )}
+//   </>
+// );
 
 export const StepTwo = () => {
   const { navigationData, updateStepData, setContinueHandler, setStepValidity } = useSteps();
   const { step2 } = navigationData;
   const { data } = step2;
-  const { obstaclesArray } = data;
+  const { walls: generatedWalls } = data;
 
   const [walls, setWalls] = useState<Wall[]>([]);
 
-  const [grid, setGrid] = useState<number[][]>(() => {
-    const arr: number[][] = [];
-    for (let y = 0; y < GRID_ROWS; y++) {
-      const row: number[] = [];
-      for (let x = 0; x < GRID_COLS; x++) {
-        row.push(0);
-      }
-      arr.push(row);
-    }
-    return arr;
-  });
+  // const isCellInAnyRectangle = (x: number, y: number, wallsArg = walls) => {
+  //   const cellCenterLat = y * CELL_SIZE + CELL_SIZE / 2;
+  //   const cellCenterLng = x * CELL_SIZE + CELL_SIZE / 2;
+
+  //   for (const wall of wallsArg) {
+  //     if (wall.type === "rectangle") {
+  //       const latlngs = wall.latlngs;
+  //       if (
+  //         Array.isArray(latlngs) &&
+  //         latlngs.length === 2 &&
+  //         Array.isArray(latlngs[0]) && latlngs[0].length === 2 &&
+  //         Array.isArray(latlngs[1]) && latlngs[1].length === 2
+  //       ) {
+  //         const [[lat1, lng1], [lat2, lng2]] = latlngs;
+  //         const minLat = Math.min(lat1, lat2);
+  //         const maxLat = Math.max(lat1, lat2);
+  //         const minLng = Math.min(lng1, lng2);
+  //         const maxLng = Math.max(lng1, lng2);
+
+  //         if (
+  //           cellCenterLat >= minLat &&
+  //           cellCenterLat <= maxLat &&
+  //           cellCenterLng >= minLng &&
+  //           cellCenterLng <= maxLng
+  //         ) {
+  //           return true;
+  //         }
+  //       }
+  //     }
+  //   }
+  //   return false;
+  // };
+
+  // const buildGridFromRectangles = () => {
+  //   const newGrid: number[][] = [];
+  //   for (let y = 0; y < GRID_ROWS; y++) {
+  //     const row: number[] = [];
+  //     for (let x = 0; x < GRID_COLS; x++) {
+  //       const isObstacle = isCellInAnyRectangle(x, y, walls);
+  //       row.push(isObstacle ? 1 : 0);
+  //     }
+  //     newGrid.push(row);
+  //   }
+
+  //   setGrid(newGrid);
+  //   updateStepData('step2', { obstaclesArray: newGrid });
+  //   setStepValidity('step2', true);
+  // };
 
   useEffect(() => {
-    if (obstaclesArray && obstaclesArray.length > 0) {
-      console.log('testing');
-      const newWalls: Wall[] = [];
-      for (let y = 0; y < obstaclesArray.length; y++) {
-        for (let x = 0; x < obstaclesArray[0].length; x++) {
-          if (obstaclesArray[y][x] !== 0) {
-            newWalls.push({
-              type: "rectangle",
-              latlngs: [
-                [y * CELL_SIZE, x * CELL_SIZE],
-                [(y + 1) * CELL_SIZE, (x + 1) * CELL_SIZE],
-              ],
-            });
-          }
-        }
-      }
-      setWalls(newWalls);
+    if (walls.length === 0 && generatedWalls && generatedWalls.length > 0) {
+      setWalls(generatedWalls);
     }
-  }, [obstaclesArray]);
-
-  const isCellInAnyRectangle = (x: number, y: number, wallsArg = walls) => {
-    const cellCenterLat = y * CELL_SIZE + CELL_SIZE / 2;
-    const cellCenterLng = x * CELL_SIZE + CELL_SIZE / 2;
-
-    for (const wall of wallsArg) {
-      if (wall.type === "rectangle") {
-        const latlngs = wall.latlngs;
-        if (
-          Array.isArray(latlngs) &&
-          latlngs.length === 2 &&
-          Array.isArray(latlngs[0]) && latlngs[0].length === 2 &&
-          Array.isArray(latlngs[1]) && latlngs[1].length === 2
-        ) {
-          const [[lat1, lng1], [lat2, lng2]] = latlngs;
-          const minLat = Math.min(lat1, lat2);
-          const maxLat = Math.max(lat1, lat2);
-          const minLng = Math.min(lng1, lng2);
-          const maxLng = Math.max(lng1, lng2);
-
-          if (
-            cellCenterLat >= minLat &&
-            cellCenterLat <= maxLat &&
-            cellCenterLng >= minLng &&
-            cellCenterLng <= maxLng
-          ) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  };
-
-  const buildGridFromRectangles = useCallback(() => {
-    const newGrid: number[][] = [];
-    for (let y = 0; y < GRID_ROWS; y++) {
-      const row: number[] = [];
-      for (let x = 0; x < GRID_COLS; x++) {
-        const isObstacle = isCellInAnyRectangle(x, y, walls);
-        row.push(isObstacle ? 1 : 0);
-      }
-      newGrid.push(row);
-    }
-
-    setGrid(newGrid);
-    updateStepData('step2', { obstaclesArray: newGrid });
-    setStepValidity('step2', true);
-  }, [walls]);
+  }, []);
 
   useEffect(() => {
-    setContinueHandler(buildGridFromRectangles);
+    const handleContinue = () => {
+      updateStepData('step2', { walls });
+      setStepValidity('step2', true);
+    }
+
+    setContinueHandler(handleContinue);
 
     return () => {
       setContinueHandler(() => { });
     };
-  }, [buildGridFromRectangles]);
+  }, [walls]);
 
-  const defineWalls = (props) => setWalls((prev) => [...prev, props]);
+  const defineWalls = (props) => {
+    const newWalls = [...walls, props];
+    setWalls(newWalls);
+    updateStepData('step2', { walls: newWalls });
+  };
 
   return (
     <LeafletCanvas navigationData={navigationData}>
-      <ObstacleLayer grid={obstaclesArray} />
       <IndoorMap walls={walls} defineWalls={defineWalls} />
     </LeafletCanvas>
   );
