@@ -5,6 +5,7 @@ import "leaflet-draw/dist/leaflet.draw.css";
 import { useSteps } from "../../hooks/useSteps";
 import { OBSTACLE_COLOR, LeafletCanvas } from "../LeafletCanvas";
 import { CustomDrawControl } from "../../CustomDrawControl";
+import { Button } from "@mui/material";
 
 type Wall = {
   id: string;
@@ -14,6 +15,91 @@ type Wall = {
 };
 
 const PRODUCT_COLOR = "#1976d2";
+
+type ProductRect = {
+  id: string;
+  type: "rectangle";
+  latlngs: { lat: number; lng: number }[][];
+  productId: string;
+};
+
+function getBounds(latlngs: any): [number, number, number, number] {
+  if (!latlngs || latlngs.length === 0) {
+    return [0, 0, 0, 0];
+  }
+  let lats: number[] = [];
+  let lngs: number[] = [];
+  if (Array.isArray(latlngs[0])) {
+    // Wall: [[lat, lng], [lat, lng]]
+    if (latlngs.length < 2) return [0, 0, 0, 0];
+    lats = [latlngs[0][0], latlngs[1][0]];
+    lngs = [latlngs[0][1], latlngs[1][1]];
+  } else if (typeof latlngs[0] === "object") {
+    // Product: [[{lat, lng}, ...]]
+    const flat = latlngs.flat();
+    if (flat.length === 0) return [0, 0, 0, 0];
+    lats = flat.map((p: any) => p.lat);
+    lngs = flat.map((p: any) => p.lng);
+  }
+  return [
+    Math.min(...lats),
+    Math.max(...lats),
+    Math.min(...lngs),
+    Math.max(...lngs),
+  ];
+}
+
+function generate2DGrid(
+  walls: Wall[],
+  rectangles: ProductRect[],
+  rows = 60,
+  cols = 60,
+  cellSize = 10
+) {
+  const grid: (number | string)[][] = Array.from({ length: rows }, () =>
+    Array(cols).fill(0)
+  );
+
+  // Mark walls as 1
+  walls.forEach((wall) => {
+    const [minLat, maxLat, minLng, maxLng] = getBounds(wall.latlngs);
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const y = r * cellSize;
+        const x = c * cellSize;
+        if (
+          y >= minLat &&
+          y <= maxLat &&
+          x >= minLng &&
+          x <= maxLng
+        ) {
+          grid[r][c] = 1;
+        }
+      }
+    }
+  });
+
+  // Mark product rectangles with productId
+  rectangles.forEach((rect) => {
+    const [minLat, maxLat, minLng, maxLng] = getBounds(rect.latlngs);
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const y = r * cellSize;
+        const x = c * cellSize;
+        if (
+          y >= minLat &&
+          y <= maxLat &&
+          x >= minLng &&
+          x <= maxLng
+        ) {
+          grid[r][c] = rect.productId;
+        }
+      }
+    }
+  });
+
+  return grid;
+}
 
 const ProductWallLayer = ({
   walls = [],
@@ -61,8 +147,16 @@ export const StepThree = () => {
   const { walls = [] } = navigationData.step2.data || {};
   const { productWalls = [], productArray = [] } = navigationData.step3.data || {};
 
-  const [rectangles, setRectangles] = useState<Wall[]>(() => productWalls || []);
+  const [rectangles, setRectangles] = useState<any>(() => productWalls || []);
   const [selectedProductId, setSelectedProductId] = useState("");
+
+  const [grid, setGrid] = useState<(number | string)[][]>([]);
+
+  const handleGenerateGrid = () => {
+    const newGrid = generate2DGrid(walls, rectangles);
+    setGrid(newGrid);
+    console.log(newGrid); // For debugging
+  };
 
   useEffect(() => {
     updateStepData("step3", { productWalls: rectangles });
@@ -162,8 +256,6 @@ export const StepThree = () => {
         {productArray.map(({ productId, productName }: any) => {
           const isMarkedAlready = rectangles.some((rect) => +rect.productId === productId);
 
-          console.log(isMarkedAlready);
-
           return (<option key={productId} disabled={isMarkedAlready} value={productId}>
             {productName}
           </option>)
@@ -179,6 +271,7 @@ export const StepThree = () => {
           disableDraw={!selectedProductId}
         />
       </LeafletCanvas>
+      <Button onClick={handleGenerateGrid}>Generate Grid</Button>
     </>
   );
 };

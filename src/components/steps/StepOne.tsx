@@ -22,6 +22,8 @@ export const StepOne = () => {
     useEffect(() => {
         if (!imageSrc) return;
 
+        setNxtBtnState(true);
+
         const handler = () => {
             updateStepData("step1", { image: imageSrc });
         };
