@@ -11,6 +11,7 @@ type CustomDrawControlProps = {
   onShapeDrawn: (latlngs: any, type: string, layer?: any) => void;
   onShapeDeleted?: (deletedLatLngs: any[]) => void;
   onShapeEdited?: (editedShapes: any[]) => void;
+  disableDraw?: boolean;
   mode?: string;
 };
 
@@ -18,6 +19,7 @@ export const CustomDrawControl = ({
     onShapeDrawn,
     onShapeDeleted,
     onShapeEdited,
+    disableDraw=false,
     mode = "grid",
 }: CustomDrawControlProps) => {
     const map = useMap();
@@ -40,7 +42,7 @@ export const CustomDrawControl = ({
         const drawControl = new (L.Control as any).Draw({
             draw: {
                 polygon: false,
-                rectangle: {
+                rectangle: !disableDraw && {
                     shapeOptions: { color: rectColor },
                 },
                 circle: false,
