@@ -29,18 +29,32 @@ function getBounds(latlngs: any): [number, number, number, number] {
   }
   let lats: number[] = [];
   let lngs: number[] = [];
-  if (Array.isArray(latlngs[0])) {
-    // Wall: [[lat, lng], [lat, lng]]
-    if (latlngs.length < 2) return [0, 0, 0, 0];
-    lats = [latlngs[0][0], latlngs[1][0]];
-    lngs = [latlngs[0][1], latlngs[1][1]];
-  } else if (typeof latlngs[0] === "object") {
-    // Product: [[{lat, lng}, ...]]
-    const flat = latlngs.flat();
-    if (flat.length === 0) return [0, 0, 0, 0];
+  if (
+    Array.isArray(latlngs[0]) &&
+    latlngs[0].length > 0 &&
+    typeof latlngs[0][0] === "object" &&
+    "lat" in latlngs[0][0] &&
+    "lng" in latlngs[0][0]
+  ) {
+    const flat = latlngs[0];
     lats = flat.map((p: any) => p.lat);
     lngs = flat.map((p: any) => p.lng);
+  } else if (
+    Array.isArray(latlngs[0]) &&
+    typeof latlngs[0][0] === "number" &&
+    typeof latlngs[0][1] === "number"
+  ) {
+    lats = [latlngs[0][0], latlngs[1][0]];
+    lngs = [latlngs[0][1], latlngs[1][1]];
+  } else if (
+    typeof latlngs[0] === "object" &&
+    "lat" in latlngs[0] &&
+    "lng" in latlngs[0]
+  ) {
+    lats = latlngs.map((p: any) => p.lat);
+    lngs = latlngs.map((p: any) => p.lng);
   }
+  if (lats.length === 0 || lngs.length === 0) return [0, 0, 0, 0];
   return [
     Math.min(...lats),
     Math.max(...lats),
@@ -60,7 +74,6 @@ function generate2DGrid(
     Array(cols).fill(0)
   );
 
-  // Mark walls as 1
   walls.forEach((wall) => {
     const [minLat, maxLat, minLng, maxLng] = getBounds(wall.latlngs);
     for (let r = 0; r < rows; r++) {
@@ -79,9 +92,15 @@ function generate2DGrid(
     }
   });
 
-  // Mark product rectangles with productId
-  rectangles.forEach((rect) => {
+  rectangles.forEach((rect, i) => {
+    if (!rect.latlngs || rect.latlngs.length === 0 || !rect.latlngs[0] || rect.latlngs[0].length === 0) {
+      return;
+    }
     const [minLat, maxLat, minLng, maxLng] = getBounds(rect.latlngs);
+    if (minLat === 0 && maxLat === 0 && minLng === 0 && maxLng === 0) {
+      return;
+    }
+
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         const y = r * cellSize;
@@ -92,7 +111,7 @@ function generate2DGrid(
           x >= minLng &&
           x <= maxLng
         ) {
-          grid[r][c] = rect.productId;
+          grid[r][c] = +rect.productId;
         }
       }
     }
@@ -154,8 +173,22 @@ export const StepThree = () => {
 
   const handleGenerateGrid = () => {
     const newGrid = generate2DGrid(walls, rectangles);
+
+    const updatedProductArray = productArray.map(product => {
+      const rect = rectangles.find(r => String(r.productId) === String(product.productId));
+      if (rect && rect.latlngs && rect.latlngs[0]) {
+        return {
+          ...product,
+          coOrds: rect.latlngs[0],
+        };
+      }
+      return product;
+    });
+
     setGrid(newGrid);
-    console.log(newGrid); // For debugging
+    updateStepData('step3', {productArray: updatedProductArray});
+    console.log("Grid:", newGrid);
+    console.log("Updated Product Array:", updatedProductArray);
   };
 
   useEffect(() => {
