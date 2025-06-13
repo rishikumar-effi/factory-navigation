@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Rectangle, Marker, Tooltip } from "react-leaflet";
-import L from "leaflet";
+import { Rectangle, Tooltip } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import "leaflet-draw/dist/leaflet.draw.css";
 import { useSteps } from "../../hooks/useSteps";
 import { OBSTACLE_COLOR, LeafletCanvas } from "../LeafletCanvas";
 import { CustomDrawControl } from "../../CustomDrawControl";
@@ -31,19 +32,9 @@ const ProductWallLayer = ({
           pathOptions={{ color: PRODUCT_COLOR, weight: 2, fillOpacity: 0.5 }}
         >
           {product && (
-            <Marker
-              position={[
-                (wall.latlngs[0][0] + wall.latlngs[1][0]) / 2,
-                (wall.latlngs[0][1] + wall.latlngs[1][1]) / 2,
-              ]}
-              icon={L.divIcon({
-                className: "product-marker",
-                html: `<div style="transform: translateY(-10px)">${product.productName}</div>`,
-                iconSize: [60, 20],
-              })}
-            >
-              <Tooltip>{product.productName}</Tooltip>
-            </Marker>
+            <Tooltip direction="top" offset={[0, -10]}>
+              {product.productName}
+            </Tooltip>
           )}
         </Rectangle>
       );
@@ -70,26 +61,22 @@ export const StepThree = () => {
   const { walls = [] } = navigationData.step2.data || {};
   const { productWalls = [], productArray = [] } = navigationData.step3.data || {};
 
-  // Prepopulate from context on mount
   const [rectangles, setRectangles] = useState<Wall[]>(() => productWalls || []);
   const [selectedProductId, setSelectedProductId] = useState("");
 
-  // Sync rectangles to context
   useEffect(() => {
     updateStepData("step3", { productWalls: rectangles });
   }, [rectangles, updateStepData]);
 
-  // Set continue handler and validity
   useEffect(() => {
     const handleContinue = () => {
       updateStepData("step3", { productWalls: rectangles });
       setStepValidity("step3", true);
     };
     setContinueHandler(handleContinue);
-    return () => setContinueHandler(() => {});
+    return () => setContinueHandler(() => { });
   }, [rectangles, updateStepData, setStepValidity, setContinueHandler]);
 
-  // Drawing handler
   const handleShapeDrawn = (latlngs: any, type: string, layer?: any) => {
     if (type !== "rectangle") return;
     if (!selectedProductId) {
@@ -103,12 +90,12 @@ export const StepThree = () => {
       productId: selectedProductId,
     };
     setRectangles((prev) => [...prev, wallWithId]);
+    setSelectedProductId("");
     if (layer && wallWithId.id) {
       layer.options.wallId = wallWithId.id;
     }
   };
 
-  // Deletion handler
   const getBoundsFromLatLngs = (latlngs: any) => {
     if (latlngs.length === 2 && Array.isArray(latlngs[0]) && Array.isArray(latlngs[1])) {
       return latlngs;
@@ -147,7 +134,6 @@ export const StepThree = () => {
     updateStepData("step3", { productWalls: filtered });
   };
 
-  // Edit handler (optional, similar to StepTwo)
   const handleShapesEdited = (editedShapes: any[]) => {
     let updated = [...rectangles];
     editedShapes.forEach(({ latlngs, wallId }) => {
@@ -172,12 +158,16 @@ export const StepThree = () => {
           marginBottom: "1em",
         }}
       >
-        <option value="">Select Item</option>
-        {productArray.map(({ productId, productName }: any) => (
-          <option key={productId} value={productId}>
+        <option value="--">Select Item</option>
+        {productArray.map(({ productId, productName }: any) => {
+          const isMarkedAlready = rectangles.some((rect) => +rect.productId === productId);
+
+          console.log(isMarkedAlready);
+
+          return (<option key={productId} disabled={isMarkedAlready} value={productId}>
             {productName}
-          </option>
-        ))}
+          </option>)
+        })}
       </select>
       <LeafletCanvas navigationData={navigationData}>
         <WallLayer walls={walls} color={OBSTACLE_COLOR} />
@@ -186,6 +176,7 @@ export const StepThree = () => {
           onShapeDrawn={handleShapeDrawn}
           onShapeDeleted={handleShapesDeleted}
           onShapeEdited={handleShapesEdited}
+          disableDraw={!selectedProductId}
         />
       </LeafletCanvas>
     </>
