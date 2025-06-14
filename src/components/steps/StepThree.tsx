@@ -169,8 +169,6 @@ export const StepThree = () => {
   const [rectangles, setRectangles] = useState<any>(() => productWalls || []);
   const [selectedProductId, setSelectedProductId] = useState("");
 
-  const [grid, setGrid] = useState<(number | string)[][]>([]);
-
   const handleGenerateGrid = () => {
     const newGrid = generate2DGrid(walls, rectangles);
 
@@ -185,11 +183,9 @@ export const StepThree = () => {
       return product;
     });
 
-    setGrid(newGrid);
-    updateStepData('step3', {productArray: updatedProductArray});
-    updateStepData('step4', {finalArray: newGrid});
-    console.log("Grid:", newGrid);
-    console.log("Updated Product Array:", updatedProductArray);
+    updateStepData('step4', { finalArray: newGrid });
+    updateStepData('step3', { productArray: updatedProductArray });
+    setStepValidity('step3', true);
   };
 
   useEffect(() => {
@@ -198,12 +194,31 @@ export const StepThree = () => {
 
   useEffect(() => {
     const handleContinue = () => {
-      updateStepData("step3", { productWalls: rectangles });
-      setStepValidity("step3", true);
+      const newGrid = generate2DGrid(walls, rectangles);
+
+      const updatedProductArray = productArray.map(product => {
+        const rect = rectangles.find(r => String(r.productId) === String(product.productId));
+        if (rect && rect.latlngs && rect.latlngs[0]) {
+          return {
+            ...product,
+            coOrds: rect.latlngs[0],
+          };
+        }
+        return product;
+      });
+
+      updateStepData('step4', { finalArray: newGrid });
+      updateStepData('step3', { productArray: updatedProductArray });
+      setStepValidity('step3', true);
     };
     setContinueHandler(handleContinue);
     return () => setContinueHandler(() => { });
   }, [rectangles, updateStepData, setStepValidity, setContinueHandler]);
+
+  useEffect(() => {
+    updateStepData('step4', []);
+    setStepValidity('step3', false);
+  },[]);
 
   const handleShapeDrawn = (latlngs: any, type: string, layer?: any) => {
     if (type !== "rectangle") return;
@@ -305,7 +320,7 @@ export const StepThree = () => {
           disableDraw={!selectedProductId}
         />
       </LeafletCanvas>
-      <Button onClick={handleGenerateGrid}>Generate Grid</Button>
+      {/* <Button onClick={handleGenerateGrid}>Generate Grid</Button> */}
     </>
   );
 };
