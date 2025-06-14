@@ -1,96 +1,119 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import L from "leaflet";
+import L, { LatLngBounds } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import PathFinder from "../../utils/pathFinder";
 import { Rectangle, Marker, Tooltip } from "react-leaflet";
-import { CELL_SIZE, PRODUCT_COLOR, OBSTACLE_COLOR, PATH_COLOR, LeafletCanvas, PATH_HIGHLIGHT_COLOR } from "../LeafletCanvas";
+import { CELL_SIZE, PRODUCT_COLOR, OBSTACLE_COLOR, LeafletCanvas, PATH_HIGHLIGHT_COLOR } from "../LeafletCanvas";
 import { useSteps } from "../../hooks/useSteps";
 
-type CoOrd = { x: number; y: number };
+function computeGridOrigin(productArray: any[]) {
+  let minLat = Infinity, minLng = Infinity;
 
-type Item = {
-  productId: number;
-  productName: string;
-  coOrds: CoOrd[];
+  productArray.forEach(product => {
+    if (product.coOrds && product.coOrds.length > 0) {
+      product.coOrds.forEach(pt => {
+        if (pt.lat < minLat) minLat = pt.lat;
+        if (pt.lng < minLng) minLng = pt.lng;
+      });
+    }
+  });
+
+  if (minLat === Infinity) minLat = 0;
+  if (minLng === Infinity) minLng = 0;
+
+  return { minLat, minLng };
+}
+
+function latLngToGridCell(pt, minLat, minLng, cellSize) {
+  return {
+    x: Math.floor((pt.lat - minLat) / cellSize),
+    y: Math.floor((pt.lng - minLng) / cellSize),
+  };
+}
+
+const GridLayer = ({ grid, startPos, paths, products, onCellClick }) => {
+  return <>
+    {grid.map((row, x) =>
+      row.map((cell, y) => {
+        const isStart = startPos.x === x && startPos.y === y;
+        const isPath = paths.some((p) => p.x === x && p.y === y);
+        const isItem = products.some(({ coOrds }) =>
+          coOrds.some(({ x: ix, y: iy }) => ix === x && iy === y)
+        );
+
+        let color = "transparent";
+        if (cell === 1) color = OBSTACLE_COLOR;
+        if (isPath) color = PATH_HIGHLIGHT_COLOR;
+        if (isStart) color = "#0ea5e9";
+        if (isItem) color = PRODUCT_COLOR;
+
+        return (
+          <Rectangle
+            key={`${x}-${y}`}
+            bounds={boundsFromGrid(x, y)}
+            pathOptions={{ color, weight: 1, fillOpacity: 0.6 }}
+            eventHandlers={{
+              click: () => onCellClick(x, y),
+            }}
+          />
+        );
+      })
+
+    )}
+  </>
 };
 
-type GridType = number[][];
-
-type StartPos = { x: number; y: number };
-
-type GridLayerProps = {
-  grid: GridType;
-  startPos: StartPos;
-  paths: CoOrd[];
-  itemsDatabase: Item[];
-  onCellClick: (x: number, y: number) => void;
-};
-
-const GridLayer = ({ grid, startPos, paths, itemsDatabase, onCellClick }: GridLayerProps) => {
-  return (
-    <>
-      {grid.map((row, x) =>
-        row.map((cell, y) => {
-          const isStart = startPos.x === x && startPos.y === y;
-          const isPath = paths.some((p) => p.x === x && p.y === y);
-          const isItem = itemsDatabase.some(({ coOrds }) =>
-            coOrds.some(({ x: ix, y: iy }) => ix === x && iy === y)
-          );
-
-          let color = PATH_COLOR;
-          if (cell === 1) color = OBSTACLE_COLOR; // wall
-          if (isPath) color = PATH_HIGHLIGHT_COLOR; // path
-          if (isStart) color = "#0ea5e9"; // start
-          if (isItem) color = PRODUCT_COLOR; // item
-
-          return (
-            <Rectangle
-              key={`${x}-${y}`}
-              bounds={boundsFromGrid(x, y)}
-              pathOptions={{ color, weight: 1, fillOpacity: color === PATH_COLOR ? 0.3 : 0.8 }}
-              eventHandlers={{
-                click: () => onCellClick(x, y),
-              }}
-            />
-          );
-        })
-      )}
-    </>
+const boundsFromGrid = (x: number, y: number): LatLngBounds => {
+  const bounds = new LatLngBounds(
+    [y * CELL_SIZE, x * CELL_SIZE],
+    [(y + 1) * CELL_SIZE, (x + 1) * CELL_SIZE]
   );
+  return bounds;
 };
 
-const boundsFromGrid = (x: number, y: number): [[number, number], [number, number]] => [
-  [x * CELL_SIZE, y * CELL_SIZE],
-  [(x + 1) * CELL_SIZE, (y + 1) * CELL_SIZE],
-];
+const WallLayer = ({ walls = [], color }: { walls?: any[]; color: string }) => (
+  <>
+    {walls.map((wall) =>
+      wall.type === "rectangle" ? (
+        <Rectangle
+          key={wall.id}
+          bounds={wall.latlngs}
+          pathOptions={{ color, weight: 2, fillOpacity: 0.5 }}
+        />
+      ) : null
+    )}
+  </>
+);
 
 export const StepFour = () => {
-  const markerRefs = useRef<Record<string, any>>({});
-
   const { navigationData } = useSteps();
 
-  const { step2, step3 } = navigationData;
+  const { productArray } = navigationData.step3.data;
 
-  const { walls } = step2.data;
-  const { productArray } = step3.data;
+  const grid = navigationData.step4.data.finalArray;
 
-  const lastOpenMarkerRef = useRef<any>(null);
+  const markerRefs = useRef({});
 
-  const [grid] = useState<GridType>(walls);
+  const lastOpenMarkerRef = useRef<L.Marker | null>(null);
 
-  const itemsDatabase: Item[] = productArray;
+  const { minLat, minLng } = computeGridOrigin(productArray);
 
-  const [startPos, setStartPos] = useState<StartPos>({ x: 21, y: 18 });
-  const [paths, setPaths] = useState<CoOrd[]>([]);
-  const [selectedItem, setSelectedItem] = useState<string>("");
+  const itemsDatabase = productArray.map(product => ({
+    ...product,
+    coOrds: product.coOrds.map(pt => latLngToGridCell(pt, minLat, minLng, CELL_SIZE)),
+  }));
+
+  const [startPos, setStartPos] = useState({ x: 30, y: 50 });
+  const [paths, setPaths] = useState([]);
+  const [selectedItem, setSelectedItem] = useState("");
 
   const [pathfinder] = useState(() => {
     const pf = new PathFinder();
-    pf.setGrid(walls);
+    pf.setGrid(grid);
     return pf;
   });
 
-  const findPath = useCallback((targetProduct: Item | null = null) => {
+  const findPath = useCallback((targetProduct = null) => {
     const selected = targetProduct
       ? targetProduct
       : itemsDatabase.find(item => item.productId === +selectedItem);
@@ -112,18 +135,18 @@ export const StepFour = () => {
 
     pathfinder.setGrid(tempGrid);
 
-    let bestPath: [number, number][] | null = null;
+    let bestPath: any = null;
     let shortestLength = Infinity;
 
     for (const { x, y } of coOrds) {
-      const adjustedGrid = tempGrid.map((row) => row.slice());
+      const adjustedGrid = tempGrid.map((row, i) => row.slice());
       adjustedGrid[x][y] = 0;
 
       pathfinder.setGrid(adjustedGrid);
       const path = pathfinder.findPath(startPos.x, startPos.y, x, y);
 
-      if (Array.isArray(path) && path.length > 0 && path.length < shortestLength) {
-        bestPath = path as [number, number][];
+      if (path.length > 0 && path.length < shortestLength) {
+        bestPath = path;
         shortestLength = path.length;
       }
     }
@@ -133,12 +156,14 @@ export const StepFour = () => {
     }
   }, [selectedItem, startPos, grid]);
 
+
   useEffect(() => {
     if (!selectedItem) return;
-
+    console.log(selectedItem);
     findPath();
 
     const product = itemsDatabase.find((item) => item.productId === +selectedItem);
+    console.log(product);
     if (!product) return;
 
     const { coOrds } = product;
@@ -155,10 +180,10 @@ export const StepFour = () => {
         lastOpenMarkerRef.current = newMarker;
       }
     }
-
   }, [selectedItem, startPos]);
 
-  const handleCellClick = (x: number, y: number) => {
+  const handleCellClick = (x:number, y:number) => {
+    console.log(x, y);
     if (grid[x][y] !== 1 && grid[x][y] !== 2) {
       setStartPos({ x, y });
       setPaths([]);
@@ -169,20 +194,14 @@ export const StepFour = () => {
     className: "source-icon",
     html: `<div style="transform: translateY(-10px)"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="-2 0 32 32"><path fill="url(#b)" fill-rule="evenodd" d="M23.14 4.06C20.493 1.352 17.298 0 13.555 0 9.812 0 6.617 1.353 3.97 4.06 1.323 6.764 0 10.031 0 13.858c0 3.827 1.323 7.093 3.97 9.8l7.162 7.322a3.389 3.389 0 0 0 4.845 0l7.163-7.323c2.646-2.706 3.97-5.973 3.97-9.8 0-3.826-1.324-7.093-3.97-9.799Zm-9.585 14.996a4.954 4.954 0 0 0 1.945-.396 5.043 5.043 0 0 0 1.65-1.127 5.159 5.159 0 0 0 1.101-1.686 5.268 5.268 0 0 0 .387-1.988 5.315 5.315 0 0 0-.6-2.45 5.222 5.222 0 0 0-.889-1.225A5.094 5.094 0 0 0 15.5 9.057a4.99 4.99 0 0 0-4.77.48 5.096 5.096 0 0 0-1.402 1.434 5.219 5.219 0 0 0-.759 1.874 5.302 5.302 0 0 0 1.057 4.31 5.16 5.16 0 0 0 1.105 1.025 5.04 5.04 0 0 0 1.832.776c.328.066.658.1.992.1Z" clip-rule="evenodd"/><defs><radialGradient id="b" cx="0" cy="0" r="1" gradientTransform="matrix(0 32 -27.1097 0 13.555 0)" gradientUnits="userSpaceOnUse"><stop stop-color="#5877e4"/><stop offset="1" stop-color="#103ad1"/></radialGradient></defs></svg></div>`,
     iconSize: [28, 28],
-  });
-
-  useEffect(() => {
-    const randomNumber = Math.floor(Math.random() * productArray.length);
-    const { productId } = productArray[randomNumber];
-    setSelectedItem(`${productId}`);
-  }, []);
+  })
 
   return (
-    <>
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', gap: '1em' }}>
       <select
         onChange={(e) => setSelectedItem(e.target.value)}
         value={selectedItem}
-        style={{ minHeight: '30px', padding: '6px 12px', alignSelf: 'center', marginBottom: '1em' }}
+        style={{ minHeight: '30px', padding: '6px 12px', alignSelf: 'center' }}
       >
         <option value="">Select Item</option>
         {itemsDatabase.map(({ productId, productName }) => (
@@ -196,7 +215,7 @@ export const StepFour = () => {
           grid={grid}
           startPos={startPos}
           paths={paths}
-          itemsDatabase={itemsDatabase}
+          products={itemsDatabase}
           onCellClick={handleCellClick}
         />
         <Marker
@@ -211,11 +230,12 @@ export const StepFour = () => {
           </Tooltip>
         </Marker>
 
-        {itemsDatabase.map((item: any) => {
+        {itemsDatabase.map((item, idx) => {
+          if (!item.coOrds || item.coOrds.length === 0) return null;
           const { x, y } = item.coOrds[0];
-          const key = `${item.productId}-${x}-${y}`;
+          if (isNaN(x) || isNaN(y)) return null;
           return <Marker
-            key={`${item.productId}-${x}-${y}`}
+            key={`${item.productId}-${idx}`}
             position={[
               x * CELL_SIZE + CELL_SIZE / 2,
               y * CELL_SIZE + CELL_SIZE / 2,
@@ -233,7 +253,7 @@ export const StepFour = () => {
               },
             }}
             ref={(ref) => {
-              if (ref) markerRefs.current[key] = ref;
+              // if (ref) markerRefs.current[key] = ref;
             }}
           >
             <Tooltip direction="top" offset={[0, -10]} permanent={false} sticky>
@@ -243,6 +263,6 @@ export const StepFour = () => {
         }
         )}
       </LeafletCanvas>
-    </>
-  );
+    </div>
+  )
 };
