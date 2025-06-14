@@ -187,6 +187,7 @@ export const StepThree = () => {
 
     setGrid(newGrid);
     updateStepData('step3', {productArray: updatedProductArray});
+    updateStepData('step4', {finalArray: newGrid});
     console.log("Grid:", newGrid);
     console.log("Updated Product Array:", updatedProductArray);
   };
