@@ -2,7 +2,7 @@ import { Box } from "@mui/material";
 import L from "leaflet";
 import { MapContainer, ImageOverlay } from "react-leaflet";
 
-export const CELL_SIZE = 10;
+export const CELL_SIZE = 20;
 export const PRODUCT_COLOR = "#5c5c5c";
 export const OBSTACLE_COLOR = "#333";
 export const PATH_COLOR = "#e0e0e0";

@@ -3,10 +3,11 @@ import { Rectangle, Tooltip } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
 import { useSteps } from "../../hooks/useSteps";
-import { OBSTACLE_COLOR, LeafletCanvas } from "../LeafletCanvas";
+import { OBSTACLE_COLOR, LeafletCanvas, CELL_SIZE } from "../LeafletCanvas";
 import { CustomDrawControl } from "../../CustomDrawControl";
-import { Button } from "@mui/material";
+import { CoordinateToGridConverter, type WallCoordinate, type Product } from "../../utils/coOrdinateToGrid";
 
+// Update your existing types to match the converter interface
 type Wall = {
   id: string;
   type: "rectangle";
@@ -22,6 +23,25 @@ type ProductRect = {
   latlngs: { lat: number; lng: number }[][];
   productId: string;
 };
+
+// Helper function to convert your Wall type to WallCoordinate type
+function convertWallsToWallCoordinates(walls: Wall[]): WallCoordinate[] {
+  return walls.map(wall => ({
+    id: wall.id,
+    type: wall.type,
+    latlngs: wall.latlngs,
+  }));
+}
+
+// Helper function to convert your ProductRect type to Product type
+function convertProductRectsToProducts(rectangles: ProductRect[]): Product[] {
+  return rectangles.map(rect => ({
+    id: rect.id,
+    type: rect.type,
+    latlngs: rect.latlngs,
+    productId: rect.productId,
+  }));
+}
 
 function getBounds(latlngs: any): [number, number, number, number] {
   if (!latlngs || latlngs.length === 0) {
@@ -61,63 +81,6 @@ function getBounds(latlngs: any): [number, number, number, number] {
     Math.min(...lngs),
     Math.max(...lngs),
   ];
-}
-
-function generate2DGrid(
-  walls: Wall[],
-  rectangles: ProductRect[],
-  rows = 60,
-  cols = 60,
-  cellSize = 10
-) {
-  const grid: (number | string)[][] = Array.from({ length: rows }, () =>
-    Array(cols).fill(0)
-  );
-
-  walls.forEach((wall) => {
-    const [minLat, maxLat, minLng, maxLng] = getBounds(wall.latlngs);
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const y = r * cellSize;
-        const x = c * cellSize;
-        if (
-          y >= minLat &&
-          y <= maxLat &&
-          x >= minLng &&
-          x <= maxLng
-        ) {
-          grid[r][c] = 1;
-        }
-      }
-    }
-  });
-
-  rectangles.forEach((rect, i) => {
-    if (!rect.latlngs || rect.latlngs.length === 0 || !rect.latlngs[0] || rect.latlngs[0].length === 0) {
-      return;
-    }
-    const [minLat, maxLat, minLng, maxLng] = getBounds(rect.latlngs);
-    if (minLat === 0 && maxLat === 0 && minLng === 0 && maxLng === 0) {
-      return;
-    }
-
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const y = r * cellSize;
-        const x = c * cellSize;
-        if (
-          y >= minLat &&
-          y <= maxLat &&
-          x >= minLng &&
-          x <= maxLng
-        ) {
-          grid[r][c] = +rect.productId;
-        }
-      }
-    }
-  });
-
-  return grid;
 }
 
 const ProductWallLayer = ({
@@ -170,32 +133,23 @@ export const StepThree = () => {
   const [selectedProductId, setSelectedProductId] = useState("");
 
   const handleGenerateGrid = () => {
-    const newGrid = generate2DGrid(walls, rectangles);
+    try {
+      // 1. Convert your data types to the converter's expected format
+      const wallCoordinates: WallCoordinate[] = convertWallsToWallCoordinates(walls);
+      const products: Product[] = convertProductRectsToProducts(rectangles);
 
-    const updatedProductArray = productArray.map(product => {
-      const rect = rectangles.find(r => String(r.productId) === String(product.productId));
-      if (rect && rect.latlngs && rect.latlngs[0]) {
-        return {
-          ...product,
-          coOrds: rect.latlngs[0],
-        };
-      }
-      return product;
-    });
+      // 2. Use the TypeScript grid converter
+      const gridResult = CoordinateToGridConverter.convertToGrid(
+        wallCoordinates, 
+        products, 
+        CELL_SIZE // Use your existing CELL_SIZE constant
+      );
 
-    updateStepData('step4', { finalArray: newGrid });
-    updateStepData('step3', { productArray: updatedProductArray });
-    setStepValidity('step3', true);
-  };
+      console.log('Generated grid:', gridResult);
+      console.log('Grid dimensions:', gridResult.info.width, 'x', gridResult.info.height);
+      console.log('Grid bounds:', gridResult.info.bounds);
 
-  useEffect(() => {
-    updateStepData("step3", { productWalls: rectangles });
-  }, [rectangles, updateStepData]);
-
-  useEffect(() => {
-    const handleContinue = () => {
-      const newGrid = generate2DGrid(walls, rectangles);
-
+      // 3. Update productArray with rectangle coordinates (keep your existing logic)
       const updatedProductArray = productArray.map(product => {
         const rect = rectangles.find(r => String(r.productId) === String(product.productId));
         if (rect && rect.latlngs && rect.latlngs[0]) {
@@ -207,18 +161,38 @@ export const StepThree = () => {
         return product;
       });
 
-      updateStepData('step4', { finalArray: newGrid });
+      // 4. Update step data with the new grid and converter instance
+      updateStepData('step4', { 
+        finalArray: gridResult.grid,
+        gridInfo: gridResult.info,
+        converter: gridResult.converter // Save converter for coordinate transformations
+      });
       updateStepData('step3', { productArray: updatedProductArray });
-      setStepValidity('step3', true);
+      setStepValidity('step4', true);
+
+      console.log('Grid generation completed successfully');
+    } catch (error) {
+      console.error('Error generating grid:', error);
+    }
+  };
+
+  useEffect(() => {
+    updateStepData("step3", { productWalls: rectangles });
+  }, [rectangles, updateStepData]);
+
+  useEffect(() => {
+    const handleGenerateGridWrapper = () => {
+      handleGenerateGrid();
     };
-    setContinueHandler(handleContinue);
+
+    setContinueHandler(handleGenerateGridWrapper);
     return () => setContinueHandler(() => { });
-  }, [rectangles, updateStepData, setStepValidity, setContinueHandler]);
+  }, [rectangles, walls, productArray, updateStepData, setStepValidity, setContinueHandler]);
 
   useEffect(() => {
     updateStepData('step4', []);
     setStepValidity('step3', false);
-  },[]);
+  }, []);
 
   const handleShapeDrawn = (latlngs: any, type: string, layer?: any) => {
     if (type !== "rectangle") return;
