@@ -12,7 +12,7 @@ export type NavigationDataType = {
     step1: { data: { image: string }, valid: boolean },
     step2: { data: { walls: Array<any> }, valid: boolean },
     step3: { data: { productArray: Array<any>, productWalls: Array<any> }, valid: boolean },
-    step4: { data: { finalArray: [] }, valid: boolean }
+    step4: { data: { finalArray: [], gridInfo: any, converter: any }, valid: boolean }
 }
 
 export interface StepContextType {
@@ -27,7 +27,7 @@ export interface StepContextType {
         step1: { data: {image: any}, valid: boolean},
         step2: { data: {walls: Array<any>}, valid: boolean },
         step3: { data: {productArray: Array<any>, productWalls: Array<any>}, valid: boolean },
-        step4: {data: {finalArray: any}, valid: boolean}
+        step4: {data: {finalArray: any, gridInfo: any, converter: any}, valid: boolean}
     },
     setContinueHandler: (handler: () => void | Promise<void>) => void
 }
