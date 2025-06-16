@@ -26,10 +26,15 @@ const GridLayer = ({ grid, converter, startPos, paths, products, onCellClick }) 
 
         let color = "transparent";
         let fillOpacity = 0.1;
+
+        if(cell !== 0){
+          color = OBSTACLE_COLOR;
+          fillOpacity = 0.6;
+        }
         
         if (cell === 1) {
           // color = OBSTACLE_COLOR;
-          fillOpacity = 0.6;
+          // fillOpacity = 0.6;
         }
         if (isPath) {
           color = PATH_HIGHLIGHT_COLOR;
@@ -41,7 +46,7 @@ const GridLayer = ({ grid, converter, startPos, paths, products, onCellClick }) 
         }
         if (isItem) {
           // color = PRODUCT_COLOR;
-          fillOpacity = 0.6;
+          // fillOpacity = 0.6;
         }
 
         const topLeft = converter.gridToCoord(x, y);
