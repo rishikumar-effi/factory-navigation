@@ -4,12 +4,10 @@ class PathFinder {
   }
 
   setGrid(grid) {
+    // Convert grid format: 0=walkable, 1=obstacle, 2=walkable with item
     this.grid = grid.map(
-      (row) => row.map((cell) => {
-        return (cell === 0 ? 1 : 0)
-      })
+      (row) => row.map((cell) => (cell === 1 ? 0 : 1)) // 0=blocked, 1=walkable
     );
-    console.log(this.grid);
   }
 
   findPath(startX, startY, endX, endY) {
