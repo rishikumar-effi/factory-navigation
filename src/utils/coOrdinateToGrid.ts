@@ -187,8 +187,11 @@ class CoordinateToGridConverter {
       throw new Error(`Invalid grid position: x=${gridX}, y=${gridY}`);
     }
 
-    const lng = this.bounds.minLng + (gridX * this.gridSize) + (this.gridSize / 2);
-    const lat = this.bounds.minLat + (gridY * this.gridSize) + (this.gridSize / 2);
+    // const lng = this.bounds.minLng + (gridX * this.gridSize) + (this.gridSize / 2);
+    // const lat = this.bounds.minLat + (gridY * this.gridSize) + (this.gridSize / 2);
+
+    const lng = this.bounds.minLng + (gridX * this.gridSize);
+    const lat = this.bounds.minLat + (gridY * this.gridSize);
     return { lat, lng };
   }
 

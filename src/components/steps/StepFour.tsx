@@ -17,7 +17,7 @@ const GridLayer = ({ grid, converter, startPos, paths, products, onCellClick }) 
       row.map((cell, colIndex) => {
         const y = rowIndex;
         const x = colIndex;
-        
+
         const isStart = startPos.x === x && startPos.y === y;
         const isPath = paths.some((p) => p.x === x && p.y === y);
         const isItem = products.some(({ gridCoOrds }) =>
@@ -26,10 +26,15 @@ const GridLayer = ({ grid, converter, startPos, paths, products, onCellClick }) 
 
         let color = "transparent";
         let fillOpacity = 0.1;
-        
+
+        if (cell !== 0) {
+          color = OBSTACLE_COLOR;
+          fillOpacity = 0.6;
+        }
+
         if (cell === 1) {
           // color = OBSTACLE_COLOR;
-          fillOpacity = 0.6;
+          // fillOpacity = 0.6;
         }
         if (isPath) {
           color = PATH_HIGHLIGHT_COLOR;
@@ -41,7 +46,7 @@ const GridLayer = ({ grid, converter, startPos, paths, products, onCellClick }) 
         }
         if (isItem) {
           // color = PRODUCT_COLOR;
-          fillOpacity = 0.6;
+          // fillOpacity = 0.6;
         }
 
         const topLeft = converter.gridToCoord(x, y);
@@ -76,21 +81,23 @@ export const StepFour = () => {
 
   const itemsDatabase = useMemo(() => {
     if (!productArray || !converter) return [];
-    
+
     return productArray.map(product => {
-      const gridCoOrds = [];
-      
+      const gridCoOrds: any = [];
+
       if (product.coOrds) {
         product.coOrds.forEach(pt => {
           try {
-            const gridPos = converter.coordToGrid(pt.lat, pt.lng);
-            gridCoOrds.push(gridPos);
+            const gp = converter.coordToGrid(pt.lat, pt.lng);
+            gridCoOrds.push({ x: Math.floor(gp.x), y: Math.floor(gp.y) });
+            // const gridPos = converter.coordToGrid(pt.lat, pt.lng);
+            // gridCoOrds.push(gridPos);
           } catch (error) {
             console.warn('Failed to convert coordinate to grid:', pt, error);
           }
         });
       }
-      
+
       return {
         ...product,
         gridCoOrds
@@ -98,7 +105,7 @@ export const StepFour = () => {
     });
   }, [productArray, converter]);
 
-  const [startPos, setStartPos] = useState({ x: 25, y: 4 });
+  const [startPos, setStartPos] = useState({ x: 50, y: 5 });
   const [paths, setPaths] = useState([]);
   const [selectedItem, setSelectedItem] = useState("");
 
@@ -114,71 +121,50 @@ export const StepFour = () => {
     }
   }, [grid, pathfinder]);
 
-  const findPath = useCallback((targetProduct = null) => {
-    if (!grid || !converter) {
-      console.warn('Grid not available for pathfinding');
-      return;
-    }
+  const toPF = ({ x, y }) => [y, x];
+  const fromPF: any = ([row, col]) => ({ x: col, y: row });
 
-    const selected = targetProduct
-      ? targetProduct
-      : itemsDatabase.find(item => item.productId === +selectedItem);
+  const findPath = useCallback(
+    (targetProduct = null) => {
+      if (!grid) return;
 
-    if (!selected || !selected.gridCoOrds || selected.gridCoOrds.length === 0) {
-      console.warn('No valid target selected or no grid coordinates');
-      return;
-    }
+      const selected =
+        targetProduct ??
+        itemsDatabase.find((it) => it.productId === +selectedItem);
+      if (!selected?.gridCoOrds?.length) return;
 
-    const { gridCoOrds } = selected;
+      const baseGrid = grid.map((row) => row.map((c) => (c === 0 ? 0 : 1)));
 
-    const tempGrid = grid.map((row, rowIndex) =>
-      row.map((cell, colIndex) => {
-        const y = rowIndex;
-        const x = colIndex;
-        
-        const isWall = cell === 1;
-        const isOtherItem = itemsDatabase.some(({ gridCoOrds: coords, productId }) => 
-          productId !== selected.productId && 
-          coords && coords.some(({ x: ix, y: iy }) => ix === x && iy === y)
-        );
-        return isWall || isOtherItem ? 1 : 0;
-      })
-    );
+      const [sRow, sCol] = toPF(startPos);
+      let best: any = null;
+      let bestLen = Infinity;
 
-    let bestPath: any = null;
-    let shortestLength = Infinity;
+      for (const { x: gCol, y: gRow } of selected.gridCoOrds) {
+        const temp = baseGrid.map((r) => r.slice());
+        itemsDatabase.forEach(({ productId, gridCoOrds }) => {
+          if (productId !== selected.productId)
+            gridCoOrds?.forEach(({ x, y }) => (temp[y][x] = 1));
+        });
+        temp[gRow][gCol] = 0;
 
-    for (const { x, y } of gridCoOrds) {
-      const adjustedGrid = tempGrid.map((row) => row.slice());
-      if (adjustedGrid[y] && adjustedGrid[y][x] !== undefined) {
-        adjustedGrid[y][x] = 0;
-      }
+        pathfinder.setGrid(temp);
 
-      pathfinder.setGrid(adjustedGrid);
-      
-      try {
-        const path = pathfinder.findPath(startPos.x, startPos.y, x, y);
-        
-        if (path && path.length > 0 && path.length < shortestLength) {
-          bestPath = path;
-          shortestLength = path.length;
+        const raw = pathfinder.findPath(sRow, sCol, gRow, gCol);
+        if (raw?.length && raw.length < bestLen) {
+          best = raw.map(fromPF);
+          bestLen = raw.length;
         }
-      } catch (error) {
-        console.warn('Pathfinding failed for target:', { x, y }, error);
       }
-    }
 
-    if (bestPath && bestPath.length > 0) {
-      setPaths(bestPath.map(([x, y]) => ({ x, y })));
-    } else {
-      console.warn('No path found to target');
-      setPaths([]);
-    }
-  }, [selectedItem, startPos, grid, itemsDatabase, pathfinder, converter]);
+      setPaths(best ?? []);
+    },
+    [grid, itemsDatabase, selectedItem, startPos, pathfinder]
+  );
+
 
   useEffect(() => {
     if (!selectedItem) return;
-    
+
     findPath();
 
     const product = itemsDatabase.find((item) => item.productId === +selectedItem);
@@ -212,7 +198,6 @@ export const StepFour = () => {
     iconSize: [28, 28],
   });
 
-  // Loading state
   if (!grid || !converter) {
     return (
       <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -273,13 +258,13 @@ export const StepFour = () => {
 
         {itemsDatabase.map((item, idx) => {
           if (!item.gridCoOrds || item.gridCoOrds.length === 0 || !converter) return null;
-          
+
           const { x, y } = item.gridCoOrds[0];
           if (isNaN(x) || isNaN(y)) return null;
-          
+
           const markerLatLng = converter.gridToCoord(x, y);
           const key = `${item.productId}-${x}-${y}`;
-          
+
           return (
             <Marker
               key={key}

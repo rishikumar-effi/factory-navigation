@@ -16,11 +16,12 @@ export const LeafletCanvas = ({ children, navigationData }) => {
   return <Box sx={{ width: '100%', height: "100%", display: "flex", flexDirection: "column", gap: "1em" }}>
     <MapContainer
       crs={L.CRS.Simple}
+      // center={[IMAGE_WIDTH/2, IMAGE_HEIGHT/2]}
       bounds={[
         [0, 0],
         [IMAGE_HEIGHT, IMAGE_WIDTH],
       ]}
-      style={{ minHeight: "80vh", width: "100%", borderRadius: "1em" }}
+      style={{ minHeight: "80vh", width: "100%", height: '100%', borderRadius: "1em" }}
       zoom={0}
       minZoom={-2}
       maxZoom={4}
